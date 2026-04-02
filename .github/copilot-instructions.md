@@ -20,7 +20,7 @@ can issue "outlaw card" penalties that must be repaid before the next QR code ad
 | Ruby compat | Ruby 4.0+ — `ostruct` and `logger` must be listed in the Gemfile |
 
 **Frontend constraints — strictly no asset pipeline:**
-- Plain CSS in `<style>` blocks inside ERB views
+- All CSS lives in `public/css/app.css` — **never** write inline `style=` attributes or `<style>` blocks
 - Vanilla JavaScript in `<script>` blocks inside ERB views
 - External libraries must be loaded from a **CDN only** (no npm, no bundlers)
 - Current CDN dependencies: Google Fonts (Nunito), qrcodejs (`cdnjs.cloudflare.com`)
@@ -31,13 +31,16 @@ can issue "outlaw card" penalties that must be repaid before the next QR code ad
 app.rb              # All Sinatra routes and helpers (single file)
 config.ru           # Rack entry point — just requires app.rb
 db/schema.rb        # setup_database(db) — called once at boot, uses create_table?
+public/
+  css/
+    app.css         # All styles — the single source of CSS truth
 views/
-  layout.erb        # HTML shell, shared CSS (mobile-first, pastel theme)
+  layout.erb        # HTML shell: loads Nunito + app.css, yields content
   index.erb         # Landing page: countdown, debt warning, last-5 scans, admin links
   error.erb         # Generic error page (@message instance variable)
   admin/
     qr_codes.erb    # QR generation form + client-side QR rendering (qrcodejs)
-    admin/outlaw.erb  # Outlaw card form + recent cards list
+    outlaw.erb      # Outlaw card form + recent cards list
 .env.example        # Documents all required environment variables
 ```
 
@@ -163,17 +166,110 @@ h(str)                 # HTML-escapes a string (alias for Rack::Utils.escape_htm
 
 ## CSS / design conventions
 
-- **Mobile-first** — the landing page is the primary user surface (used by kids on phones)
-- CSS is written inline in `views/layout.erb` using CSS custom properties (`--primary`, etc.)
-- Colour palette: pastel pink/lavender (`--bg: #fdf2f8`, `--primary: #ec4899`, `--accent: #a855f7`)
-- Typography: Nunito (Google Fonts CDN), weight 400/600/700/900
-- Components: `.card` (white card with shadow), `.btn`, `.btn-primary`, `.alert`, `.field`
-- Container: `max-width: 480px`, centred, `padding: 0 1rem`
-- Admin pages are functional/minimal; landing page should be polished
+All styles live in **`public/css/app.css`** — the single source of CSS truth.
+ERB views must not contain `<style>` blocks or `style=` attributes.
+
+### Design tokens
+
+Defined as CSS custom properties on `:root`:
+
+| Token | Value | Use |
+|---|---|---|
+| `--bg` | `#fdf2f8` | Page background |
+| `--card-bg` | `#ffffff` | Card surface |
+| `--primary` | `#ec4899` | Primary pink — headings, buttons, active countdown |
+| `--primary-soft` | `#fce7f3` | Focus ring fill |
+| `--accent` | `#a855f7` | Accent purple — h2, finish time, QR minutes |
+| `--text` | `#1e1b2e` | Body text |
+| `--muted` | `#9b8fa6` | Secondary / hint text |
+| `--border` | `#f3e0ec` | Dividers, input borders |
+| `--warn` | `#f59e0b` | Warning / debt states |
+| `--danger` | `#ef4444` | Error states |
+| `--success` | `#10b981` | Success states |
+
+### General rules
+
+- **Mobile-first** — the landing page is the primary surface (used by kids on phones)
+- Typography: Nunito (Google Fonts CDN), weights 400 / 600 / 700 / 900
+- Container: `max-width: 480px`, centred, `padding: 1.25rem 1rem 2rem`
+- Admin pages are functional/minimal; the landing page should be polished
+
+### Class inventory
+
+`app.css` is organised into labelled sections. Add new rules in the appropriate section,
+or create a new clearly labelled section — do not append rules at the end of unrelated sections.
+
+**Layout**
+- `.container` — centred page wrapper (max 480 px)
+- `.container-centered` — adds flex centering for full-height pages (error page)
+
+**Card**
+- `.card` — white rounded card with shadow
+- `.card-hero` — variant with centred text and larger padding (countdown, error)
+
+**Button**
+- `.btn` — base pill button
+- `.btn-primary` — pink fill
+- `.btn-block` — full-width
+
+**Form**
+- `.field` — wraps label + input with bottom margin
+- Input/textarea styles are applied via element selectors (no extra class needed)
+
+**Alert**
+- `.alert` — base alert bar
+- `.alert-warn` / `.alert-danger` / `.alert-success` — colour modifiers
+
+**Navigation**
+- `.page-header` — top padding area used on admin pages
+- `.back-link` — the "← início" link style
+- `.site-header` — centred header used on the landing page
+
+**Landing page — countdown**
+- `.countdown-label` — "TEMPO RESTANTE" uppercase label
+- `.countdown-display` — the large ticking HH:MM:SS digits (active, pink)
+- `.countdown-display-idle` — same size but greyed out when no countdown is running
+- `.countdown-subtext` — text below the digits (finish time or idle prompt)
+- `.countdown-finish-time` — accent-coloured finish time value
+
+**Landing page — scan history**
+- `.scan-list` / `.scan-list-item` — the last-5 scans list and its rows
+- `.scan-timestamp` — muted left-hand timestamp
+- `.scan-minutes` — bold pink right-hand minute count (normal scan)
+- `.scan-minutes-debt` — struck-through warn-coloured minutes (debt scan)
+- `.scan-debt-label` — small "(dívida)" tag
+
+**Landing page — footer**
+- `.admin-footer` / `.admin-footer-label` — small admin links at the bottom
+
+**Error page**
+- `.error-inner` — full-width centred wrapper
+- `.error-icon` / `.error-title` / `.error-message` — emoji, heading, body
+
+**Admin — QR code results**
+- `.qr-results-heading` — the "QR Codes Gerados" h2 with tighter top margin
+- `.qr-hint` — small print tip below the grid
+- `.qr-card` — dynamically created card per QR code (added via JS alongside `.card`)
+- `.qr-image` — inline-block wrapper for the qrcodejs canvas
+- `.qr-info` / `.qr-info-minutes` — URL text and highlighted minute count
+
+**Admin — outlaw card history**
+- `.outlaw-list` / `.outlaw-list-item` — list and its rows
+- `.outlaw-list-item-header` — flex row containing date + status badge
+- `.outlaw-date` — muted small timestamp
+- `.outlaw-status` — base badge; paired with `.outlaw-status-redeemed` or `.outlaw-status-pending`
+- `.outlaw-description` — italic description text
+
+**Utilities**
+- `.is-hidden` — `display: none !important` — toggled by JS with `classList.add/remove('is-hidden')`
+- `.is-fading` — triggers the CSS opacity-transition fade-out animation (added by JS before removal)
 
 ## JavaScript conventions
 
-- No frameworks, no modules — plain ES5/ES6 in `<script>` tags inside ERB views
+- No frameworks, no modules — plain ES5/ES6 in `<script>` blocks inside ERB views
+- **Never use `element.style.*` or `element.style.cssText`** — use `classList` and CSS classes instead
+- Toggle visibility with `classList.add('is-hidden')` / `classList.remove('is-hidden')`
+- Trigger fade-out with `classList.add('is-fading')`, then `remove()` the element after 500 ms
 - `fetch()` is used for the QR generation form (POST → JSON); use `credentials: 'same-origin'`
 - Handle `res.status === 401` in fetch handlers by calling `window.location.reload()`
   (this re-triggers the browser's Basic Auth dialog)
@@ -207,3 +303,5 @@ DB[:scan_log]
 - [ ] No new gems that require compiled assets or a build step
 - [ ] No new client-side libraries unless loaded from a CDN
 - [ ] Keep `app.rb` as the single file for all routes and helpers
+- [ ] All new CSS goes into `public/css/app.css` in the appropriate labelled section — no inline `style=` attributes, no `<style>` blocks
+- [ ] All new JS visibility/state changes use `classList` — never `element.style.*`
