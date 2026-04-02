@@ -1,7 +1,7 @@
 <div class="container">
 
   <!-- Header -->
-  <div style="text-align:center; padding:.75rem 0 .25rem;">
+  <div class="site-header">
     <h1>🌸 Stay in Law</h1>
   </div>
 
@@ -21,30 +21,23 @@
   <% end %>
 
   <!-- Countdown card (most prominent element) -->
-  <div class="card" style="text-align:center; padding:2rem 1.5rem;">
+  <div class="card card-hero">
     <% if @countdown_active %>
-      <p style="font-size:.75rem; font-weight:700; letter-spacing:.08em;
-                color:var(--muted); margin-bottom:.5rem; text-transform:uppercase;">
-        Tempo restante
-      </p>
+      <p class="countdown-label">Tempo restante</p>
       <div id="countdown"
-           data-end="<%= @countdown_end_at.utc.iso8601 %>"
-           style="font-size:clamp(3rem,14vw,5rem); font-weight:900;
-                  letter-spacing:-.02em; color:var(--primary); line-height:1;">
+           class="countdown-display"
+           data-end="<%= @countdown_end_at.utc.iso8601 %>">
         --:--:--
       </div>
-      <p style="margin-top:.875rem; font-size:.9rem; color:var(--muted);">
+      <p class="countdown-subtext">
         Termina às
-        <strong id="finish-time" style="color:var(--accent);">
+        <strong id="finish-time" class="countdown-finish-time">
           <%= format_brt(@countdown_end_at) %>
         </strong>
       </p>
     <% else %>
-      <div style="font-size:clamp(3rem,14vw,5rem); font-weight:900;
-                  color:var(--border); line-height:1;">
-        00:00:00
-      </div>
-      <p style="margin-top:.875rem; font-size:.9rem; color:var(--muted);">
+      <div class="countdown-display countdown-display-idle">00:00:00</div>
+      <p class="countdown-subtext">
         <% if @recent_scans.empty? %>
           Nenhum QR code escaneado ainda 🌸
         <% else %>
@@ -58,20 +51,17 @@
   <% unless @recent_scans.empty? %>
   <div class="card">
     <h2>📋 Últimos usos</h2>
-    <ul style="list-style:none; font-size:.875rem;">
+    <ul class="scan-list">
       <% @recent_scans.each do |scan| %>
-      <li style="display:flex; justify-content:space-between; align-items:center;
-                 padding:.5rem 0; border-bottom:1px solid var(--border);">
-        <span style="color:var(--muted);">
-          <%= format_brt(scan[:scanned_at]) %>
-        </span>
+      <li class="scan-list-item">
+        <span class="scan-timestamp"><%= format_brt(scan[:scanned_at]) %></span>
         <% if scan[:outlaw_card_id] %>
-          <span style="font-weight:700; color:var(--warn); text-decoration:line-through;">
-            <%= scan[:minutes] %> min
+          <span>
+            <span class="scan-minutes-debt"><%= scan[:minutes] %> min</span>
+            <span class="scan-debt-label">(dívida)</span>
           </span>
-          <span style="font-size:.75rem; color:var(--warn); margin-left:.25rem;">(dívida)</span>
         <% else %>
-          <span style="font-weight:700; color:var(--primary);"><%= scan[:minutes] %> min</span>
+          <span class="scan-minutes"><%= scan[:minutes] %> min</span>
         <% end %>
       </li>
       <% end %>
@@ -80,8 +70,8 @@
   <% end %>
 
   <!-- Admin links -->
-  <div style="text-align:center; margin-top:2rem; padding-bottom:.5rem;">
-    <span style="font-size:.75rem; color:var(--muted);">
+  <div class="admin-footer">
+    <span class="admin-footer-label">
       admin:
       <a href="/admin/qr-codes">gerar QR codes</a>
       ·
@@ -125,8 +115,7 @@
     var notice = document.getElementById('debt-notice');
     if (notice) {
       setTimeout(function () {
-        notice.style.transition = 'opacity .5s';
-        notice.style.opacity    = '0';
+        notice.classList.add('is-fading');
         setTimeout(function () { notice.remove(); }, 500);
       }, 4000);
     }

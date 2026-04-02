@@ -1,8 +1,8 @@
 <div class="container">
 
-  <div style="padding:.75rem 0 .25rem;">
-    <a href="/" style="font-size:.85rem; color:var(--muted);">← início</a>
-    <h1 style="margin-top:.5rem;">🃏 Carta Outlaw</h1>
+  <div class="page-header">
+    <a href="/" class="back-link">← início</a>
+    <h1>🃏 Carta Outlaw</h1>
   </div>
 
   <% if @success %>
@@ -34,21 +34,19 @@
   <% unless @recent_cards.empty? %>
   <div class="card">
     <h2>📜 Cartas recentes</h2>
-    <ul style="list-style:none; font-size:.85rem;">
+    <ul class="outlaw-list">
       <% @recent_cards.each do |card| %>
-      <li style="padding:.5rem 0; border-bottom:1px solid var(--border);">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="color:var(--muted); font-size:.8rem;"><%= format_brt(card[:created_at]) %></span>
+      <li class="outlaw-list-item">
+        <div class="outlaw-list-item-header">
+          <span class="outlaw-date"><%= format_brt(card[:created_at]) %></span>
           <% if card[:redeemed_scan_id] %>
-            <span style="color:var(--muted); font-size:.8rem;">✅ quitada</span>
+            <span class="outlaw-status outlaw-status-redeemed">✅ quitada</span>
           <% else %>
-            <span style="color:var(--warn); font-weight:700; font-size:.8rem;">⏳ pendente</span>
+            <span class="outlaw-status outlaw-status-pending">⏳ pendente</span>
           <% end %>
         </div>
         <% if card[:description] %>
-        <div style="margin-top:.25rem; color:var(--text); font-style:italic;">
-          "<%= h(card[:description]) %>"
-        </div>
+        <div class="outlaw-description">"<%= h(card[:description]) %>"</div>
         <% end %>
       </li>
       <% end %>

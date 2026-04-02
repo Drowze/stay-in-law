@@ -1,9 +1,9 @@
-<div class="container" style="min-height:100vh; display:flex; align-items:center;">
-  <div style="width:100%; text-align:center;">
-    <div class="card" style="padding:2rem 1.5rem;">
-      <div style="font-size:3rem; margin-bottom:.75rem;">🚫</div>
-      <h1 style="margin-bottom:.75rem;">Ops!</h1>
-      <p style="font-size:1rem; color:var(--text); margin-bottom:1.5rem; line-height:1.6;">
+<div class="container container-centered">
+  <div class="error-inner">
+    <div class="card card-hero">
+      <div class="error-icon">🚫</div>
+      <h1 class="error-title">Ops!</h1>
+      <p class="error-message">
         <%= h(@message || 'Ocorreu um erro.') %>
       </p>
       <a href="/" class="btn btn-primary">Voltar ao início</a>
