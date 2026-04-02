@@ -1,0 +1,19 @@
+# SQLite database file
+db/app.db
+db/*.db
+
+# Dotenv secrets — copy .env.example and fill in values
+.env
+
+# Ruby / Bundler
+.bundle/
+vendor/bundle/
+
+# macOS
+.DS_Store
+
+# Editor / IDE
+.idea/
+.vscode/
+*.swp
+*.swo

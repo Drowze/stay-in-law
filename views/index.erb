@@ -1,0 +1,134 @@
+<div class="container">
+
+  <!-- Header -->
+  <div style="text-align:center; padding:.75rem 0 .25rem;">
+    <h1>🌸 Stay in Law</h1>
+  </div>
+
+  <!-- Debt warning -->
+  <% if @pending_debt > 0 %>
+  <div class="alert alert-warn">
+    ⚠️ Você deve <strong><%= @pending_debt %> QR code<%= @pending_debt > 1 ? 's' : '' %></strong>.
+    O próximo QR code escaneado irá quitar a dívida, não adicionará tempo.
+  </div>
+  <% end %>
+
+  <!-- Debt-paid notice (appears once after a debt scan) -->
+  <% if @notice == 'debt_paid' %>
+  <div class="alert alert-success" id="debt-notice">
+    ✅ QR code usado para quitar uma dívida!
+  </div>
+  <% end %>
+
+  <!-- Countdown card (most prominent element) -->
+  <div class="card" style="text-align:center; padding:2rem 1.5rem;">
+    <% if @countdown_active %>
+      <p style="font-size:.75rem; font-weight:700; letter-spacing:.08em;
+                color:var(--muted); margin-bottom:.5rem; text-transform:uppercase;">
+        Tempo restante
+      </p>
+      <div id="countdown"
+           data-end="<%= @countdown_end_at.utc.iso8601 %>"
+           style="font-size:clamp(3rem,14vw,5rem); font-weight:900;
+                  letter-spacing:-.02em; color:var(--primary); line-height:1;">
+        --:--:--
+      </div>
+      <p style="margin-top:.875rem; font-size:.9rem; color:var(--muted);">
+        Termina às
+        <strong id="finish-time" style="color:var(--accent);">
+          <%= format_brt(@countdown_end_at) %>
+        </strong>
+      </p>
+    <% else %>
+      <div style="font-size:clamp(3rem,14vw,5rem); font-weight:900;
+                  color:var(--border); line-height:1;">
+        00:00:00
+      </div>
+      <p style="margin-top:.875rem; font-size:.9rem; color:var(--muted);">
+        <% if @recent_scans.empty? %>
+          Nenhum QR code escaneado ainda 🌸
+        <% else %>
+          Escaneie um QR code para ganhar tempo! 📱
+        <% end %>
+      </p>
+    <% end %>
+  </div>
+
+  <!-- Last 5 scans -->
+  <% unless @recent_scans.empty? %>
+  <div class="card">
+    <h2>📋 Últimos usos</h2>
+    <ul style="list-style:none; font-size:.875rem;">
+      <% @recent_scans.each do |scan| %>
+      <li style="display:flex; justify-content:space-between; align-items:center;
+                 padding:.5rem 0; border-bottom:1px solid var(--border);">
+        <span style="color:var(--muted);">
+          <%= format_brt(scan[:scanned_at]) %>
+        </span>
+        <% if scan[:outlaw_card_id] %>
+          <span style="font-weight:700; color:var(--warn); text-decoration:line-through;">
+            <%= scan[:minutes] %> min
+          </span>
+          <span style="font-size:.75rem; color:var(--warn); margin-left:.25rem;">(dívida)</span>
+        <% else %>
+          <span style="font-weight:700; color:var(--primary);"><%= scan[:minutes] %> min</span>
+        <% end %>
+      </li>
+      <% end %>
+    </ul>
+  </div>
+  <% end %>
+
+  <!-- Admin links -->
+  <div style="text-align:center; margin-top:2rem; padding-bottom:.5rem;">
+    <span style="font-size:.75rem; color:var(--muted);">
+      admin:
+      <a href="/admin/qr-codes">gerar QR codes</a>
+      ·
+      <a href="/admin/outlaw">carta outlaw</a>
+    </span>
+  </div>
+
+</div>
+
+<script>
+  (function () {
+    var el = document.getElementById('countdown');
+    if (!el) return;
+
+    var endAt   = new Date(el.dataset.end);
+    var interval;
+
+    function pad(n) { return String(n).padStart(2, '0'); }
+
+    function tick() {
+      var remaining = Math.max(0, Math.floor((endAt - Date.now()) / 1000));
+
+      if (remaining <= 0) {
+        el.textContent = '00:00:00';
+        clearInterval(interval);
+        return;
+      }
+
+      var h = Math.floor(remaining / 3600);
+      var m = Math.floor((remaining % 3600) / 60);
+      var s = remaining % 60;
+      el.textContent = pad(h) + ':' + pad(m) + ':' + pad(s);
+    }
+
+    interval = setInterval(tick, 1000);
+    tick();
+  })();
+
+  // Auto-dismiss the debt-paid notice after 4 s
+  (function () {
+    var notice = document.getElementById('debt-notice');
+    if (notice) {
+      setTimeout(function () {
+        notice.style.transition = 'opacity .5s';
+        notice.style.opacity    = '0';
+        setTimeout(function () { notice.remove(); }, 500);
+      }, 4000);
+    }
+  })();
+</script>
