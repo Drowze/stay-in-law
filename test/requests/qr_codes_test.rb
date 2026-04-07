@@ -49,8 +49,8 @@ class QrCodesRequestTest < AppTest
   def test_each_code_contains_a_valid_hex_token
     post_qr_codes(count: '3')
     parsed_body.each do |qr|
-      assert_match(/\A[0-9a-f]{32}\z/, qr['token'],
-        "Expected a 32-char hex token, got: #{qr['token']}")
+      assert_match(/\A[0-9a-f]{4}\z/, qr['token'],
+        "Expected a 4-char hex token, got: #{qr['token']}")
     end
   end
 

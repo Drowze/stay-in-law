@@ -56,7 +56,7 @@ All user-facing time display is converted to BRT using `BRT.utc_to_local(utc_tim
 ```
 qr_tokens
   id                    INTEGER PK
-  token                 TEXT UNIQUE NOT NULL   -- SecureRandom.hex(16)
+  token                 TEXT UNIQUE NOT NULL   -- SecureRandom.hex(2), 4 hex chars
   minutes               INTEGER NOT NULL       -- 1–60, immutable after creation
   created_at            TEXT NOT NULL          -- ISO-8601 UTC
   last_used_week_start  TEXT                   -- 'YYYY-MM-DD' Monday in BRT; NULL = never used

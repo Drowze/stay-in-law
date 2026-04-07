@@ -192,7 +192,7 @@ post '/admin/qr-codes' do
   now_utc  = Time.now.utc.iso8601
 
   tokens = count.times.map do
-    tok = SecureRandom.hex(16)
+    tok = SecureRandom.hex(2)
     DB[:qr_tokens].insert(token: tok, minutes: minutes, created_at: now_utc)
     { token: tok, scan_url: "#{base_url}/scan?token=#{tok}", minutes: minutes }
   end
