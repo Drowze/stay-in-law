@@ -27,7 +27,7 @@ can issue "outlaw card" penalties that must be repaid before the next QR code ad
 - All CSS lives in `public/css/app.css` — **never** write inline `style=` attributes or `<style>` blocks
 - Vanilla JavaScript in `<script>` blocks inside ERB views
 - External libraries must be loaded from a **CDN only** (no npm, no bundlers)
-- Current CDN dependencies: Google Fonts (Nunito), qrcodejs (`cdnjs.cloudflare.com`)
+- Current CDN dependencies: Google Fonts (Nunito), qr-code-styling (`unpkg.com`)
 
 ## Repository layout
 
@@ -43,7 +43,7 @@ views/
   index.erb         # Landing page: countdown, debt warning, last-5 scans, admin links
   error.erb         # Generic error page (@message instance variable)
   admin/
-    qr_codes.erb    # QR generation form + client-side QR rendering (qrcodejs)
+    qr_codes.erb    # QR generation form + client-side QR rendering (qr-code-styling)
     outlaw.erb      # Outlaw card form + recent cards list
 .env.example        # Documents all required environment variables
 .env.test           # Test-environment overrides (committed; no secrets)
@@ -271,9 +271,10 @@ or create a new clearly labelled section — do not append rules at the end of u
 
 **Admin — QR code results**
 - `.qr-results-heading` — the "QR Codes Gerados" h2 with tighter top margin
-- `.qr-hint` — small print tip below the grid
+- `.qr-results-header` — flex row containing the "QR Codes Gerados" heading and the print button
+- `.qr-print-btn` — the "🖨️ Imprimir" button shown after generation
 - `.qr-card` — dynamically created card per QR code (added via JS alongside `.card`)
-- `.qr-image` — inline-block wrapper for the qrcodejs canvas
+- `.qr-image` — inline-block wrapper for the qr-code-styling canvas
 - `.qr-info` / `.qr-info-minutes` — URL text and highlighted minute count
 
 **Admin — outlaw card history**
@@ -298,7 +299,7 @@ or create a new clearly labelled section — do not append rules at the end of u
 - Handle `res.status === 401` in fetch handlers by calling `window.location.reload()`
   (this re-triggers the browser's Basic Auth dialog)
 - QR codes are rendered client-side by `new QRCode(element, { text, width, height })`
-  using the qrcodejs library loaded from cdnjs
+  using the qr-code-styling library loaded from unpkg.com
 - Countdown ticks via `setInterval(tick, 1000)`; reads `new Date(el.dataset.end)` for target
 
 ## Sequel query patterns

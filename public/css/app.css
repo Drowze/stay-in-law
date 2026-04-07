@@ -267,16 +267,17 @@ input:focus, textarea:focus {
 
 /* ─── QR code results section ────────────────────────────────────────────────── */
 
+.qr-results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  margin-bottom: .25rem;
+}
+
 .qr-results-heading {
   margin: .25rem 0 .75rem;
   /* colour is inherited from base h2 rule */
-}
-
-.qr-hint {
-  font-size: .8rem;
-  color: var(--muted);
-  text-align: center;
-  margin-top: .5rem;
 }
 
 /* Each generated QR code card (created dynamically by JS) */
@@ -289,6 +290,11 @@ input:focus, textarea:focus {
   margin-bottom: .75rem;
 }
 
+/* qr-code-styling renders a canvas — ensure it renders at correct size */
+.qr-image canvas {
+  display: block;
+}
+
 .qr-info {
   font-size: .75rem;
   color: var(--muted);
@@ -298,6 +304,12 @@ input:focus, textarea:focus {
 
 .qr-info-minutes {
   color: var(--accent);
+}
+
+.qr-print-btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-bottom: .5rem;
 }
 
 /* ─── Outlaw card history list ───────────────────────────────────────────────── */

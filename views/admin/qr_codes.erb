@@ -27,17 +27,43 @@
   </div>
 
   <div id="qr-results" class="is-hidden">
-    <h2 class="qr-results-heading">✅ QR Codes Gerados</h2>
+    <div class="qr-results-header">
+      <h2 class="qr-results-heading">✅ QR Codes Gerados</h2>
+      <button id="print-btn" class="btn btn-primary qr-print-btn" onclick="printQRCodes()">
+        🖨️ Imprimir
+      </button>
+    </div>
     <div id="qr-grid"></div>
-    <p class="qr-hint">Dica: use a impressão do navegador para imprimir os QR codes.</p>
   </div>
 
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"
-        integrity="sha512-CNgIRecGo7nphbeZ04Sc13ka07paqdeTu0WR1IM4kNcpmBAUSHSQX0FslNhTDadL4O5SAGapGt4FodqL8My0mA=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://unpkg.com/qr-code-styling@1.6.0/lib/qr-code-styling.js"></script>
 <script>
+  // Builds a base64 SVG with the minutes number for the QR code center image
+  function minutesSVG(minutes) {
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="56">' +
+      '<text x="40" y="40" text-anchor="middle" font-family="Nunito,sans-serif" ' +
+      'font-weight="900" font-size="32" fill="#ec4899">' + minutes + '</text>' +
+      '</svg>';
+    return 'data:image/svg+xml;base64,' + btoa(svg);
+  }
+
+  function makeQRCode(element, url, minutes, size) {
+    new QRCodeStyling({
+      width:  size,
+      height: size,
+      type:   'canvas',
+      data:   url,
+      image:  minutesSVG(minutes),
+      dotsOptions:          { type: 'rounded',       color: '#6d28d9' },
+      cornersSquareOptions: { type: 'extra-rounded',  color: '#ec4899' },
+      cornersDotOptions:    { type: 'dot',            color: '#ec4899' },
+      backgroundOptions:    { color: '#ffffff' },
+      imageOptions:         { crossOrigin: 'anonymous', margin: 3, imageSize: 0.28 }
+    }).append(element);
+  }
+
   document.getElementById('generate-form').addEventListener('submit', async function (e) {
     e.preventDefault();
 
@@ -57,7 +83,6 @@
         body:        body.toString()
       });
 
-      // Handle auth challenge: reload to trigger browser's Basic Auth dialog
       if (res.status === 401) { window.location.reload(); return; }
 
       var json = await res.json();
@@ -87,6 +112,7 @@
     tokens.forEach(function (t) {
       var wrapper = document.createElement('div');
       wrapper.className = 'card qr-card';
+      wrapper.dataset.minutes = t.minutes;
 
       var qrDiv = document.createElement('div');
       qrDiv.className = 'qr-image';
@@ -99,10 +125,47 @@
       wrapper.appendChild(info);
       grid.appendChild(wrapper);
 
-      new QRCode(qrDiv, { text: t.scan_url, width: 200, height: 200 });
+      makeQRCode(qrDiv, t.scan_url, t.minutes, 220);
     });
 
     container.classList.remove('is-hidden');
     container.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // Collects rendered QR canvases and opens a print-ready window (4×5 per page)
+  function printQRCodes() {
+    var cards = document.querySelectorAll('#qr-grid .qr-card');
+    if (!cards.length) return;
+
+    var items = Array.from(cards).map(function (card) {
+      var canvas  = card.querySelector('canvas');
+      var minutes = card.dataset.minutes;
+      return { src: canvas ? canvas.toDataURL('image/png') : '', minutes: minutes };
+    });
+
+    var cardCSS = [
+      'body{margin:0;font-family:Nunito,sans-serif;background:#fff}',
+      '.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:8px}',
+      '.card{text-align:center;border:1px solid #f3e0ec;border-radius:12px;padding:8px;break-inside:avoid}',
+      '.card:nth-child(20n){break-after:always}',
+      'img{width:160px;height:160px;display:block;margin:0 auto}',
+      '.label{font-size:13px;font-weight:700;color:#6d28d9;margin-top:4px}',
+      '@page{size:A4;margin:10mm}'
+    ].join('');
+
+    var cardsHTML = items.map(function (item) {
+      return '<div class="card"><img src="' + item.src + '"><p class="label">' + item.minutes + ' min</p></div>';
+    }).join('');
+
+    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+      '<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700&display=swap" rel="stylesheet">' +
+      '<style>' + cardCSS + '</style></head><body>' +
+      '<div class="grid">' + cardsHTML + '</div>' +
+      '<script>window.onload=function(){window.print();window.close();}<\/script>' +
+      '</body></html>';
+
+    var win = window.open('', '_blank');
+    win.document.write(html);
+    win.document.close();
   }
 </script>
