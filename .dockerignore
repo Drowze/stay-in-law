@@ -1,0 +1,6 @@
+.git
+coverage/
+db/*.db
+.env
+.env.development
+.env.test
