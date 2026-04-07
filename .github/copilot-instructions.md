@@ -15,7 +15,7 @@ can issue "outlaw card" penalties that must be repaid before the next QR code ad
 | ORM | Sequel (`~> 5.0`) with SQLite (`sqlite3 ~> 1.7`) |
 | Timezone | `tzinfo ~> 2.0` — always use `America/Sao_Paulo` (BRT, DST-aware) |
 | Templates | ERB (Sinatra's built-in renderer) |
-| Config | `dotenv ~> 2.8` — loaded at the top of `app.rb` via `require 'dotenv/load'` |
+| Config | `dotenv ~> 2.8` — `app.rb` loads `.env.${RACK_ENV}` then `.env` via `Dotenv.load` |
 | Server | Puma (`~> 6.0`) via `config.ru` |
 | Ruby compat | Ruby 4.0+ — `ostruct` and `logger` must be listed in the Gemfile |
 
@@ -42,6 +42,10 @@ views/
     qr_codes.erb    # QR generation form + client-side QR rendering (qrcodejs)
     outlaw.erb      # Outlaw card form + recent cards list
 .env.example        # Documents all required environment variables
+.env.test           # Test-environment overrides (committed; no secrets)
+test/
+  test_helper.rb    # Sets RACK_ENV=test, defines AppTest base class (Rack::Test)
+  requests/         # Request (integration) tests
 ```
 
 ## Database schema
@@ -82,7 +86,9 @@ then `countdown_end_at = scanned_at + qr_tokens.minutes * 60`.
 | `BASIC_AUTH_PASSWORD` | HTTP Basic Auth password |
 | `SECURE_TOKEN` | Token required on admin POST endpoints (QR generation, outlaw cards) |
 | `BASE_URL` | Origin used when building QR scan URLs (e.g. `https://example.com`) |
-| `DATABASE_PATH` | SQLite file path (default: `db/app.db`) |
+
+The SQLite DB path is derived automatically from `RACK_ENV`: `db/#{RACK_ENV}.db`
+(e.g. `db/development.db`, `db/test.db`, `db/production.db`).
 
 ## Routes
 

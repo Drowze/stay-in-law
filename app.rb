@@ -5,13 +5,14 @@ require 'securerandom'
 require 'time'
 require 'tzinfo'
 require 'fileutils'
-require 'dotenv/load'
+require 'dotenv'
+Dotenv.load(".env.#{ENV.fetch('RACK_ENV', 'development')}", '.env')
 
 require_relative 'db/schema'
 
 # ─── Database ─────────────────────────────────────────────────────────────────
 
-DB_PATH = ENV.fetch('DATABASE_PATH', 'db/app.db')
+DB_PATH = "db/#{ENV.fetch('RACK_ENV', 'development')}.db"
 FileUtils.mkdir_p(File.dirname(DB_PATH))
 DB = Sequel.connect("sqlite://#{DB_PATH}")
 setup_database(DB)
