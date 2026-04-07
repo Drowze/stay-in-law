@@ -1,4 +1,4 @@
-require_relative '../test_helper'
+require_relative '../../test_helper'
 
 class QrCodesRequestTest < AppTest
   # ─── Helpers ──────────────────────────────────────────────────────────────
@@ -163,5 +163,17 @@ class QrCodesRequestTest < AppTest
     post_qr_codes(minutes: '60')
     assert_equal 200, last_response.status
     assert_equal 60, parsed_body.first['minutes']
+  end
+
+  # ─── GET /admin/qr-codes ──────────────────────────────────────────────────
+
+  def test_get_returns_200_with_auth
+    get '/admin/qr-codes', {}, auth_header
+    assert_equal 200, last_response.status
+  end
+
+  def test_get_requires_basic_auth
+    get '/admin/qr-codes'
+    assert_equal 401, last_response.status
   end
 end

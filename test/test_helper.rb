@@ -3,6 +3,9 @@
 # - the DB is created at db/test.db (isolated from development)
 ENV['RACK_ENV'] = 'test'
 
+require 'simplecov'
+SimpleCov.start
+
 require 'base64'
 require 'json'
 require 'minitest/autorun'

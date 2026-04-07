@@ -2,6 +2,9 @@
 db/app.db
 db/*.db
 
+# Test coverage report
+coverage/
+
 # Dotenv secrets — copy .env.example and fill in values
 .env
 

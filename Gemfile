@@ -8,8 +8,10 @@ gem 'sqlite3',  '~> 1.7'
 gem 'tzinfo',   '~> 2.0'
 gem 'dotenv',   '~> 2.8'
 gem 'puma',     '~> 6.0'
+gem 'rake'
 
 group :test do
   gem 'minitest', '~> 5.0'
   gem 'rack-test', '~> 2.0'
+  gem 'simplecov', '~> 0.22', require: false
 end
