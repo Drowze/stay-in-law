@@ -140,7 +140,7 @@ post '/scans' do
   end
 
   countdown_end_at = compute_countdown_end_at
-  if countdown_end_at && countdown_end_at > Time.now.utc
+  if countdown_end_at && countdown_end_at > Time.now.utc && pending_debt_count == 0
     halt 422, { error: 'A contagem regressiva ainda está ativa. Aguarde terminar antes de escanear um novo QR code.', code: 'countdown_active' }.to_json
   end
 

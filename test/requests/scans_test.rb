@@ -178,9 +178,9 @@ class ScansRequestTest < AppTest
     assert_equal 0, DB[:scan_log].count
   end
 
-  # ─── 422 — countdown still active ────────────────────────────────────────
+  # ─── 422 — countdown still active (no debt) ─────────────────────────────
 
-  def test_returns_422_when_countdown_is_active
+  def test_returns_422_when_countdown_is_active_and_no_debt
     activate_countdown
     qr = insert_token
     post_scan(token: qr[:token])
@@ -199,6 +199,33 @@ class ScansRequestTest < AppTest
     qr = insert_token
     post_scan(token: qr[:token])
     assert_equal 1, DB[:scan_log].count
+  end
+
+  # ─── 201 — debt scan allowed even when countdown is active ───────────────
+
+  def test_returns_201_when_countdown_active_but_debt_exists
+    activate_countdown
+    insert_outlaw_card
+    qr = insert_token
+    post_scan(token: qr[:token])
+    assert_equal 201, last_response.status
+  end
+
+  def test_debt_scan_during_countdown_redeems_outlaw_card
+    activate_countdown
+    insert_outlaw_card(description: 'active debt')
+    qr = insert_token
+    post_scan(token: qr[:token])
+    refute_nil parsed_body['outlaw_card']
+    assert_equal 0, DB[:outlaw_cards].where(redeemed_scan_id: nil).count
+  end
+
+  def test_debt_scan_during_countdown_inserts_scan_log_row
+    activate_countdown   # creates 1 scan
+    insert_outlaw_card
+    qr = insert_token
+    post_scan(token: qr[:token])
+    assert_equal 2, DB[:scan_log].count
   end
 
   # ─── 403 — invalid / missing token ───────────────────────────────────────
