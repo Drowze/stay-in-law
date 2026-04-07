@@ -13,10 +13,26 @@
   </div>
   <% end %>
 
-  <!-- Debt-paid notice (appears once after a debt scan) -->
-  <% if @notice == 'debt_paid' %>
-  <div class="alert alert-success" id="debt-notice">
+  <!-- Scan notices -->
+  <% if @notice == 'success_time_added' %>
+  <div class="alert alert-success is-auto-dismiss">
+    ✅ QR code escaneado! Tempo adicionado à contagem.
+  </div>
+  <% elsif @notice == 'success_debt_paid' %>
+  <div class="alert alert-success is-auto-dismiss">
     ✅ QR code usado para quitar uma dívida!
+  </div>
+  <% elsif @notice == 'failure_token_already_used' %>
+  <div class="alert alert-warn is-auto-dismiss">
+    ⚠️ Este QR code já foi usado esta semana. Tente outro!
+  </div>
+  <% elsif @notice == 'failure_countdown_active' %>
+  <div class="alert alert-warn is-auto-dismiss">
+    ⚠️ A contagem regressiva ainda está ativa. Aguarde terminar antes de escanear um novo QR code.
+  </div>
+  <% elsif @notice == 'failure_bad_scan' %>
+  <div class="alert alert-danger is-auto-dismiss">
+    ❌ QR code inválido ou erro ao escanear.
   </div>
   <% end %>
 
@@ -110,14 +126,47 @@
     tick();
   })();
 
-  // Auto-dismiss the debt-paid notice after 4 s
+  // Auto-dismiss notices marked with .is-auto-dismiss after 4 s
   (function () {
-    var notice = document.getElementById('debt-notice');
-    if (notice) {
+    document.querySelectorAll('.is-auto-dismiss').forEach(function (el) {
       setTimeout(function () {
-        notice.classList.add('is-fading');
-        setTimeout(function () { notice.remove(); }, 500);
+        el.classList.add('is-fading');
+        setTimeout(function () { el.remove(); }, 500);
       }, 4000);
-    }
+    });
+  })();
+
+  // Auto-submit scan when ?token= is present in the URL
+  (function () {
+    var params = new URLSearchParams(window.location.search);
+    var token  = params.get('token');
+    if (!token) return;
+
+    fetch('/scans', {
+      method:      'POST',
+      credentials: 'same-origin',
+      headers:     { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body:        'token=' + encodeURIComponent(token)
+    }).then(function (res) {
+      if (res.status === 401) {
+        window.location.reload();
+        return;
+      }
+      res.json().then(function (data) {
+        if (res.status === 201) {
+          var notice = data.outlaw_card ? 'success_debt_paid' : 'success_time_added';
+          window.location.href = '/?notice=' + notice;
+        } else if (res.status === 422) {
+          var notice = data.code === 'token_already_used'
+            ? 'failure_token_already_used'
+            : 'failure_countdown_active';
+          window.location.href = '/?notice=' + notice;
+        } else {
+          window.location.href = '/?notice=failure_bad_scan';
+        }
+      });
+    }).catch(function () {
+      window.location.href = '/?notice=failure_bad_scan';
+    });
   })();
 </script>

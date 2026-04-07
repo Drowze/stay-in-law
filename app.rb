@@ -119,30 +119,29 @@ get '/' do
   erb :index
 end
 
-get '/scan' do
+post '/scans' do
+  protected!
+  content_type :json
+
   token_str = params[:token].to_s.strip
 
-  if token_str.empty?
-    @message = 'QR code inválido.'
-    halt 403, erb(:error)
+  unless token_str.length > 0
+    halt 403, { error: 'QR code inválido.' }.to_json
   end
 
   qr = DB[:qr_tokens].where(token: token_str).first
   unless qr
-    @message = 'QR code inválido.'
-    halt 403, erb(:error)
+    halt 403, { error: 'QR code inválido.' }.to_json
   end
 
   week_start = current_week_start_brt
   if qr[:last_used_week_start] == week_start
-    @message = 'Este QR code já foi usado esta semana. Tente outro!'
-    halt 403, erb(:error)
+    halt 422, { error: 'Este QR code já foi usado esta semana. Tente outro!', code: 'token_already_used' }.to_json
   end
 
   countdown_end_at = compute_countdown_end_at
   if countdown_end_at && countdown_end_at > Time.now.utc
-    @message = 'A contagem regressiva ainda está ativa. Aguarde terminar antes de escanear um novo QR code.'
-    halt 403, erb(:error)
+    halt 422, { error: 'A contagem regressiva ainda está ativa. Aguarde terminar antes de escanear um novo QR code.', code: 'countdown_active' }.to_json
   end
 
   now_utc = Time.now.utc.iso8601
@@ -153,13 +152,19 @@ get '/scan' do
 
   DB[:qr_tokens].where(id: qr[:id]).update(last_used_week_start: week_start)
 
+  redeemed_card = nil
   oldest_debt = DB[:outlaw_cards].where(redeemed_scan_id: nil).order(:created_at).first
   if oldest_debt
     DB[:outlaw_cards].where(id: oldest_debt[:id]).update(redeemed_scan_id: scan_id)
-    redirect '/?notice=debt_paid'
-  else
-    redirect '/'
+    redeemed_card = { id: oldest_debt[:id], description: oldest_debt[:description] }
   end
+
+  status 201
+  {
+    id:         scan_id,
+    qr_code:    { id: qr[:id], token: qr[:token], minutes: qr[:minutes] },
+    outlaw_card: redeemed_card
+  }.to_json
 end
 
 # Admin – QR code generation
@@ -194,7 +199,7 @@ post '/admin/qr-codes' do
   tokens = count.times.map do
     tok = SecureRandom.hex(2)
     DB[:qr_tokens].insert(token: tok, minutes: minutes, created_at: now_utc)
-    { token: tok, scan_url: "#{base_url}/scan?token=#{tok}", minutes: minutes }
+    { token: tok, scan_url: "#{base_url}/?token=#{tok}", minutes: minutes }
   end
 
   tokens.to_json

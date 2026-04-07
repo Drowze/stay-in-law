@@ -1,5 +1,9 @@
 # GitHub Copilot Instructions — stay-in-law
 
+> **Maintenance note:** These instructions must be reviewed after every task and updated
+> whenever routes, business logic, conventions, or file structure change. Outdated
+> instructions are worse than no instructions — keep them accurate.
+
 ## Project overview
 
 **stay-in-law** is a domestic screen-time tracker web app. Kids earn screen time by
@@ -94,8 +98,8 @@ The SQLite DB path is derived automatically from `RACK_ENV`: `db/#{RACK_ENV}.db`
 
 | Method | Path | Auth | Notes |
 |---|---|---|---|
-| GET | `/` | Basic Auth | Landing page |
-| GET | `/scan` | Token in QS | `?token=<hex>` — no Basic Auth |
+| GET | `/` | Basic Auth | Landing page; also handles `?token=` scan trigger |
+| POST | `/scans` | Basic Auth | Consume a QR token — returns JSON (see below) |
 | GET | `/admin/qr-codes` | Basic Auth | QR generation form |
 | POST | `/admin/qr-codes` | Basic Auth + Secure Token | Returns **JSON** array |
 | GET | `/admin/outlaw` | Basic Auth | Outlaw card form |
@@ -130,14 +134,27 @@ def compute_countdown_end_at
 end
 ```
 
-### Scan endpoint logic (`GET /scan`)
-1. Validate token exists in `qr_tokens`
-2. Check `last_used_week_start != current_week_start_brt` (week lock)
-3. Check countdown is not active (`compute_countdown_end_at <= Time.now.utc`)
+### Scan endpoint logic (`POST /scans`)
+
+Returns JSON. All error responses include `{error: "..."}`. The 422 responses also include a machine-readable `code` field.
+
+1. Validate token exists in `qr_tokens` → `403` if missing/invalid
+2. Check `last_used_week_start != current_week_start_brt` → `422 {code: 'token_already_used'}` if already used
+3. Check countdown is not active → `422 {code: 'countdown_active'}` if still running
 4. Insert row in `scan_log`
 5. Update `qr_tokens.last_used_week_start`
-6. If `pending_debt_count > 0`: redeem oldest outlaw card → redirect `/?notice=debt_paid`
-7. Else: redirect `/`
+6. If `pending_debt_count > 0`: redeem oldest outlaw card → `201 {id, qr_code: {...}, outlaw_card: {id, description}}`
+7. Else: `201 {id, qr_code: {...}, outlaw_card: null}`
+
+The landing page (`GET /`) detects `?token=` in the URL and auto-POSTs to `/scans` via `fetch()`, then reloads with a `?notice=` parameter:
+
+| Notice | Trigger |
+|---|---|
+| `success_time_added` | 201 + `outlaw_card` is null |
+| `success_debt_paid` | 201 + `outlaw_card` is present |
+| `failure_token_already_used` | 422 `code: token_already_used` |
+| `failure_countdown_active` | 422 `code: countdown_active` |
+| `failure_bad_scan` | any other non-2xx (401 reloads silently to re-trigger Basic Auth) |
 
 ### Debt
 - `pending_debt_count = DB[:outlaw_cards].where(redeemed_scan_id: nil).count`
@@ -269,6 +286,7 @@ or create a new clearly labelled section — do not append rules at the end of u
 **Utilities**
 - `.is-hidden` — `display: none !important` — toggled by JS with `classList.add/remove('is-hidden')`
 - `.is-fading` — triggers the CSS opacity-transition fade-out animation (added by JS before removal)
+- `.is-auto-dismiss` — marks a notice element for automatic fade-out after 4 s (handled by shared JS in `index.erb`)
 
 ## JavaScript conventions
 
@@ -276,7 +294,7 @@ or create a new clearly labelled section — do not append rules at the end of u
 - **Never use `element.style.*` or `element.style.cssText`** — use `classList` and CSS classes instead
 - Toggle visibility with `classList.add('is-hidden')` / `classList.remove('is-hidden')`
 - Trigger fade-out with `classList.add('is-fading')`, then `remove()` the element after 500 ms
-- `fetch()` is used for the QR generation form (POST → JSON); use `credentials: 'same-origin'`
+- `fetch()` is used for the QR generation form (POST → JSON) and for scan submissions from the landing page (POST → JSON); always use `credentials: 'same-origin'`
 - Handle `res.status === 401` in fetch handlers by calling `window.location.reload()`
   (this re-triggers the browser's Basic Auth dialog)
 - QR codes are rendered client-side by `new QRCode(element, { text, width, height })`

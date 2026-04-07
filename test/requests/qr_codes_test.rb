@@ -63,7 +63,7 @@ class QrCodesRequestTest < AppTest
   def test_scan_url_contains_the_base_url_and_token
     post_qr_codes(count: '1', minutes: '20')
     qr = parsed_body.first
-    expected_url = "http://example.com/scan?token=#{qr['token']}"
+    expected_url = "http://example.com/?token=#{qr['token']}"
     assert_equal expected_url, qr['scan_url']
   end
 
