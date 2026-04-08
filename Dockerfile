@@ -10,8 +10,6 @@ RUN bundle config set --local without 'test' && \
 
 COPY . .
 
-RUN mkdir -p db
-
 ENV RACK_ENV=production
 EXPOSE 4567
 
