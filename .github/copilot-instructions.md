@@ -318,6 +318,36 @@ DB[:scans]
   .where(Sequel[:outlaw_cards][:id] => nil)              # IS NULL anti-join
 ```
 
+## Docker
+
+The app ships with a `Dockerfile` based on `ruby:3.3-alpine`. Key design decisions:
+
+- `tzdata` is installed so `TZInfo` can resolve `America/Sao_Paulo` on Alpine.
+- A dedicated system user/group `app` is created and set as `USER` immediately, so all subsequent layers (`WORKDIR`, `COPY`, `bundle install`) run as non-root.
+- `test` group gems are excluded from the production image (`bundle config set --local without 'test'`).
+- The SQLite database is **not** baked into the image — mount a host directory to `/app/db` to persist data across container restarts.
+
+### Building
+
+```bash
+docker build -t stay-in-law .
+```
+
+### Running
+
+```bash
+docker run -d \
+  -p 4567:4567 \
+  -v /path/to/data:/app/db \
+  -e BASIC_AUTH_USER=youruser \
+  -e BASIC_AUTH_PASSWORD=yourpassword \
+  -e SECURE_TOKEN=yoursecrettoken \
+  --name stay-in-law \
+  stay-in-law
+```
+
+All required env vars (`BASIC_AUTH_USER`, `BASIC_AUTH_PASSWORD`, `SECURE_TOKEN`) must be provided at runtime — there is no `.env` file inside the image. The app listens on port `4567`.
+
 ## Adding new features — checklist
 
 - [ ] If adding a new page: protect with `protected!`; link from the landing page footer if user-facing
