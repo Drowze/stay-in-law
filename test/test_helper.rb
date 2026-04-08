@@ -24,8 +24,8 @@ class AppTest < Minitest::Test
 
   def setup
     DB[:outlaw_cards].delete
-    DB[:scan_log].delete
-    DB[:qr_tokens].delete
+    DB[:scans].delete
+    DB[:qr_codes].delete
   end
 
   private

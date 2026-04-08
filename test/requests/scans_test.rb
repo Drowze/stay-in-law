@@ -5,7 +5,7 @@ class ScansRequestTest < AppTest
 
   def insert_token(minutes: 30, last_used_week_start: nil)
     tok = SecureRandom.hex(2)
-    id  = DB[:qr_tokens].insert(
+    id  = DB[:qr_codes].insert(
       token:                tok,
       minutes:              minutes,
       created_at:           Time.now.utc.iso8601,
@@ -24,7 +24,7 @@ class ScansRequestTest < AppTest
   # Forces the countdown to be active by inserting a scan far in the future.
   def activate_countdown(minutes: 9999)
     qr = insert_token(minutes: minutes)
-    DB[:scan_log].insert(qr_token_id: qr[:id], scanned_at: Time.now.utc.iso8601)
+    DB[:scans].insert(qr_code_id: qr[:id], created_at: Time.now.utc.iso8601)
     qr
   end
 
@@ -80,22 +80,22 @@ class ScansRequestTest < AppTest
     assert_nil parsed_body['outlaw_card']
   end
 
-  def test_inserts_row_in_scan_log
+  def test_inserts_row_in_scans
     qr = insert_token
     post_scan(token: qr[:token])
-    assert_equal 1, DB[:scan_log].count
+    assert_equal 1, DB[:scans].count
   end
 
-  def test_scan_log_row_references_correct_token
+  def test_scans_row_references_correct_qr_code
     qr = insert_token
     post_scan(token: qr[:token])
-    assert_equal qr[:id], DB[:scan_log].first[:qr_token_id]
+    assert_equal qr[:id], DB[:scans].first[:qr_code_id]
   end
 
-  def test_updates_last_used_week_start_on_token
+  def test_updates_last_used_week_start_on_qr_code
     qr = insert_token
     post_scan(token: qr[:token])
-    updated = DB[:qr_tokens].where(id: qr[:id]).first
+    updated = DB[:qr_codes].where(id: qr[:id]).first
     refute_nil updated[:last_used_week_start]
   end
 
@@ -131,18 +131,18 @@ class ScansRequestTest < AppTest
     assert_equal 1, pending
   end
 
-  def test_debt_scan_still_inserts_scan_log_row
+  def test_debt_scan_still_inserts_scans_row
     insert_outlaw_card
     qr = insert_token
     post_scan(token: qr[:token])
-    assert_equal 1, DB[:scan_log].count
+    assert_equal 1, DB[:scans].count
   end
 
   def test_debt_scan_still_updates_week_start
     insert_outlaw_card
     qr = insert_token
     post_scan(token: qr[:token])
-    updated = DB[:qr_tokens].where(id: qr[:id]).first
+    updated = DB[:qr_codes].where(id: qr[:id]).first
     refute_nil updated[:last_used_week_start]
   end
 
@@ -150,7 +150,7 @@ class ScansRequestTest < AppTest
     insert_outlaw_card
     qr = insert_token
     post_scan(token: qr[:token])
-    scan_id   = DB[:scan_log].first[:id]
+    scan_id   = DB[:scans].first[:id]
     card      = DB[:outlaw_cards].first
     assert_equal scan_id, card[:redeemed_scan_id]
   end
@@ -171,11 +171,11 @@ class ScansRequestTest < AppTest
     assert_equal 'token_already_used', parsed_body['code']
   end
 
-  def test_already_used_does_not_insert_scan_log_row
+  def test_already_used_does_not_insert_scans_row
     week_start = current_week_start_brt
     qr = insert_token(last_used_week_start: week_start)
     post_scan(token: qr[:token])
-    assert_equal 0, DB[:scan_log].count
+    assert_equal 0, DB[:scans].count
   end
 
   # ─── 422 — countdown still active (no debt) ─────────────────────────────
@@ -194,11 +194,11 @@ class ScansRequestTest < AppTest
     assert_equal 'countdown_active', parsed_body['code']
   end
 
-  def test_countdown_active_does_not_insert_extra_scan_log_row
+  def test_countdown_active_does_not_insert_extra_scans_row
     activate_countdown   # creates 1 scan
     qr = insert_token
     post_scan(token: qr[:token])
-    assert_equal 1, DB[:scan_log].count
+    assert_equal 1, DB[:scans].count
   end
 
   # ─── 201 — debt scan allowed even when countdown is active ───────────────
@@ -220,12 +220,12 @@ class ScansRequestTest < AppTest
     assert_equal 0, DB[:outlaw_cards].where(redeemed_scan_id: nil).count
   end
 
-  def test_debt_scan_during_countdown_inserts_scan_log_row
+  def test_debt_scan_during_countdown_inserts_scans_row
     activate_countdown   # creates 1 scan
     insert_outlaw_card
     qr = insert_token
     post_scan(token: qr[:token])
-    assert_equal 2, DB[:scan_log].count
+    assert_equal 2, DB[:scans].count
   end
 
   # ─── 403 — invalid / missing token ───────────────────────────────────────
@@ -240,9 +240,9 @@ class ScansRequestTest < AppTest
     assert_equal 403, last_response.status
   end
 
-  def test_invalid_token_does_not_insert_scan_log_row
+  def test_invalid_token_does_not_insert_scans_row
     post_scan(token: 'zzzz')
-    assert_equal 0, DB[:scan_log].count
+    assert_equal 0, DB[:scans].count
   end
 
   # ─── 401 — no basic auth ─────────────────────────────────────────────────

@@ -3,10 +3,10 @@ require_relative '../../test_helper'
 class QrCodesRequestTest < AppTest
   # ─── Helpers ──────────────────────────────────────────────────────────────
 
-  # Issues POST /admin/qr-codes with sensible defaults; override any param as needed.
+  # Issues POST /admin/qr_codes with sensible defaults; override any param as needed.
   def post_qr_codes(params = {})
     defaults = { count: '3', minutes: '15', secure_token: ENV['SECURE_TOKEN'] }
-    post '/admin/qr-codes', defaults.merge(params), auth_header
+    post '/admin/qr_codes', defaults.merge(params), auth_header
   end
 
   def parsed_body
@@ -29,7 +29,7 @@ class QrCodesRequestTest < AppTest
 
   def test_persists_exactly_that_many_tokens_in_the_database
     post_qr_codes(count: '4')
-    assert_equal 4, DB[:qr_tokens].count
+    assert_equal 4, DB[:qr_codes].count
   end
 
   def test_each_code_carries_the_requested_minutes_value
@@ -41,7 +41,7 @@ class QrCodesRequestTest < AppTest
 
   def test_database_records_store_the_correct_minutes_value
     post_qr_codes(count: '2', minutes: '30')
-    DB[:qr_tokens].all.each do |row|
+    DB[:qr_codes].all.each do |row|
       assert_equal 30, row[:minutes]
     end
   end
@@ -60,25 +60,24 @@ class QrCodesRequestTest < AppTest
     assert_equal tokens.length, tokens.uniq.length
   end
 
-  def test_scan_url_contains_the_base_url_and_token
+  def test_response_does_not_include_scan_url
     post_qr_codes(count: '1', minutes: '20')
     qr = parsed_body.first
-    expected_url = "http://example.com/?token=#{qr['token']}"
-    assert_equal expected_url, qr['scan_url']
+    assert_nil qr['scan_url']
   end
 
   def test_tokens_are_stored_in_the_database_matching_the_response
     post_qr_codes(count: '3', minutes: '10')
     parsed_body.each do |qr|
-      db_row = DB[:qr_tokens].where(token: qr['token']).first
-      refute_nil db_row, "Token #{qr['token']} not found in qr_tokens"
+      db_row = DB[:qr_codes].where(token: qr['token']).first
+      refute_nil db_row, "Token #{qr['token']} not found in qr_codes"
       assert_equal qr['minutes'], db_row[:minutes]
     end
   end
 
   def test_new_tokens_have_null_last_used_week_start
     post_qr_codes(count: '2')
-    DB[:qr_tokens].all.each do |row|
+    DB[:qr_codes].all.each do |row|
       assert_nil row[:last_used_week_start]
     end
   end
@@ -86,7 +85,7 @@ class QrCodesRequestTest < AppTest
   # ─── Auth / security ──────────────────────────────────────────────────────
 
   def test_requires_basic_auth
-    post '/admin/qr-codes', { count: '1', minutes: '10', secure_token: ENV['SECURE_TOKEN'] }
+    post '/admin/qr_codes', { count: '1', minutes: '10', secure_token: ENV['SECURE_TOKEN'] }
     assert_equal 401, last_response.status
   end
 
@@ -103,7 +102,7 @@ class QrCodesRequestTest < AppTest
 
   def test_does_not_create_tokens_when_secure_token_is_wrong
     post_qr_codes(secure_token: 'definitely-wrong')
-    assert_equal 0, DB[:qr_tokens].count
+    assert_equal 0, DB[:qr_codes].count
   end
 
   # ─── Validation ───────────────────────────────────────────────────────────
@@ -136,7 +135,7 @@ class QrCodesRequestTest < AppTest
 
   def test_does_not_create_tokens_on_validation_error
     post_qr_codes(count: '51')
-    assert_equal 0, DB[:qr_tokens].count
+    assert_equal 0, DB[:qr_codes].count
   end
 
   # ─── Boundary values ──────────────────────────────────────────────────────
@@ -165,15 +164,15 @@ class QrCodesRequestTest < AppTest
     assert_equal 60, parsed_body.first['minutes']
   end
 
-  # ─── GET /admin/qr-codes ──────────────────────────────────────────────────
+  # ─── GET /admin/qr_codes ──────────────────────────────────────────────────
 
   def test_get_returns_200_with_auth
-    get '/admin/qr-codes', {}, auth_header
+    get '/admin/qr_codes', {}, auth_header
     assert_equal 200, last_response.status
   end
 
   def test_get_requires_basic_auth
-    get '/admin/qr-codes'
+    get '/admin/qr_codes'
     assert_equal 401, last_response.status
   end
 end

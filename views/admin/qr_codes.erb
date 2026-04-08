@@ -76,7 +76,7 @@
     errDiv.classList.add('is-hidden');
 
     try {
-      var res = await fetch('/admin/qr-codes', {
+      var res = await fetch('/admin/qr_codes', {
         method:      'POST',
         credentials: 'same-origin',
         headers:     { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -119,13 +119,15 @@
 
       var info = document.createElement('p');
       info.className = 'qr-info';
-      info.innerHTML = '<strong class="qr-info-minutes">' + t.minutes + ' min</strong><br>' + t.scan_url;
+      var scanUrl = window.location.origin + '/?t=' + encodeURIComponent(t.token);
+
+      info.innerHTML = '<strong class="qr-info-minutes">' + t.minutes + ' min</strong><br>' + scanUrl;
 
       wrapper.appendChild(qrDiv);
       wrapper.appendChild(info);
       grid.appendChild(wrapper);
 
-      makeQRCode(qrDiv, t.scan_url, t.minutes, 220);
+      makeQRCode(qrDiv, scanUrl, t.minutes, 220);
     });
 
     container.classList.remove('is-hidden');

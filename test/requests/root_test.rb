@@ -9,7 +9,7 @@ class RootTest < AppTest
 
   def insert_token(minutes: 30)
     tok = SecureRandom.hex(2)
-    id  = DB[:qr_tokens].insert(
+    id  = DB[:qr_codes].insert(
       token: tok, minutes: minutes, created_at: Time.now.utc.iso8601
     )
     { id: id, token: tok, minutes: minutes }
@@ -17,14 +17,14 @@ class RootTest < AppTest
 
   # Inserts a scan and returns the scan id. Optionally pair with an outlaw card
   # to create a debt scan (redeemed_scan_id set on the card).
-  def insert_scan(qr_token_id:, scanned_at: Time.now.utc.iso8601)
-    DB[:scan_log].insert(qr_token_id: qr_token_id, scanned_at: scanned_at)
+  def insert_scan(qr_code_id:, created_at: Time.now.utc.iso8601)
+    DB[:scans].insert(qr_code_id: qr_code_id, created_at: created_at)
   end
 
   # Creates an active countdown by inserting a scan with a far-future expiry.
   def activate_countdown(minutes: 9999)
     qr = insert_token(minutes: minutes)
-    insert_scan(qr_token_id: qr[:id])
+    insert_scan(qr_code_id: qr[:id])
   end
 
   def insert_outlaw_card(description: nil)
@@ -59,7 +59,7 @@ class RootTest < AppTest
     qr = insert_token
     # past scan — countdown already expired
     past = (Time.now.utc - 3600).iso8601
-    insert_scan(qr_token_id: qr[:id], scanned_at: past)
+    insert_scan(qr_code_id: qr[:id], created_at: past)
     get_root
     assert_includes last_response.body, 'Escaneie um QR code'
   end
@@ -107,7 +107,7 @@ class RootTest < AppTest
 
   def test_shows_scan_history_when_scans_exist
     qr = insert_token
-    insert_scan(qr_token_id: qr[:id])
+    insert_scan(qr_code_id: qr[:id])
     get_root
     assert_includes last_response.body, 'Últimos usos'
   end
@@ -115,7 +115,7 @@ class RootTest < AppTest
   def test_scan_history_shows_at_most_five_entries
     6.times do
       qr = insert_token
-      insert_scan(qr_token_id: qr[:id])
+      insert_scan(qr_code_id: qr[:id])
     end
     get_root
     # each scan-list-item contains the class; count occurrences

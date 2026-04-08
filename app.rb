@@ -59,22 +59,22 @@ helpers do
 
   # Returns a Time (UTC) when the countdown expires, or nil when no active/recent countdown.
   # Finds the most recent scan that was NOT used to pay off an outlaw-card debt,
-  # then computes scanned_at + qr_tokens.minutes.
+  # then computes created_at + qr_codes.minutes.
   def compute_countdown_end_at
-    scan = DB[:scan_log]
-      .join(:qr_tokens, id: :qr_token_id)
-      .left_join(:outlaw_cards, redeemed_scan_id: Sequel[:scan_log][:id])
+    scan = DB[:scans]
+      .join(:qr_codes, id: :qr_code_id)
+      .left_join(:outlaw_cards, redeemed_scan_id: Sequel[:scans][:id])
       .where(Sequel[:outlaw_cards][:id] => nil)
       .select(
-        Sequel[:scan_log][:scanned_at],
-        Sequel[:qr_tokens][:minutes]
+        Sequel[:scans][:created_at],
+        Sequel[:qr_codes][:minutes]
       )
-      .order(Sequel.desc(Sequel[:scan_log][:scanned_at]))
+      .order(Sequel.desc(Sequel[:scans][:created_at]))
       .first
 
     return nil unless scan
 
-    Time.parse(scan[:scanned_at]) + (scan[:minutes] * 60)
+    Time.parse(scan[:created_at]) + (scan[:minutes] * 60)
   end
 
   def pending_debt_count
@@ -104,15 +104,15 @@ get '/' do
   @pending_debt     = pending_debt_count
   @notice           = params[:notice]
 
-  @recent_scans = DB[:scan_log]
-    .join(:qr_tokens, id: :qr_token_id)
-    .left_join(:outlaw_cards, redeemed_scan_id: Sequel[:scan_log][:id])
+  @recent_scans = DB[:scans]
+    .join(:qr_codes, id: :qr_code_id)
+    .left_join(:outlaw_cards, redeemed_scan_id: Sequel[:scans][:id])
     .select(
-      Sequel[:scan_log][:scanned_at],
-      Sequel[:qr_tokens][:minutes],
+      Sequel[:scans][:created_at],
+      Sequel[:qr_codes][:minutes],
       Sequel[:outlaw_cards][:id].as(:outlaw_card_id)
     )
-    .order(Sequel.desc(Sequel[:scan_log][:scanned_at]))
+    .order(Sequel.desc(Sequel[:scans][:created_at]))
     .limit(5)
     .all
 
@@ -129,7 +129,7 @@ post '/scans' do
     halt 403, { error: 'QR code inválido.' }.to_json
   end
 
-  qr = DB[:qr_tokens].where(token: token_str).first
+  qr = DB[:qr_codes].where(token: token_str).first
   unless qr
     halt 403, { error: 'QR code inválido.' }.to_json
   end
@@ -145,12 +145,12 @@ post '/scans' do
   end
 
   now_utc = Time.now.utc.iso8601
-  scan_id = DB[:scan_log].insert(
-    qr_token_id: qr[:id],
-    scanned_at:  now_utc
+  scan_id = DB[:scans].insert(
+    qr_code_id: qr[:id],
+    created_at: now_utc
   )
 
-  DB[:qr_tokens].where(id: qr[:id]).update(last_used_week_start: week_start)
+  DB[:qr_codes].where(id: qr[:id]).update(last_used_week_start: week_start)
 
   redeemed_card = nil
   oldest_debt = DB[:outlaw_cards].where(redeemed_scan_id: nil).order(:created_at).first
@@ -169,12 +169,12 @@ end
 
 # Admin – QR code generation
 
-get '/admin/qr-codes' do
+get '/admin/qr_codes' do
   protected!
   erb :'admin/qr_codes'
 end
 
-post '/admin/qr-codes' do
+post '/admin/qr_codes' do
   protected!
   content_type :json
 
@@ -193,13 +193,12 @@ post '/admin/qr-codes' do
     halt 422, { error: 'Os minutos devem estar entre 1 e 60.' }.to_json
   end
 
-  base_url = ENV.fetch('BASE_URL', "#{request.scheme}://#{request.host_with_port}")
   now_utc  = Time.now.utc.iso8601
 
   tokens = count.times.map do
     tok = SecureRandom.hex(2)
-    DB[:qr_tokens].insert(token: tok, minutes: minutes, created_at: now_utc)
-    { token: tok, scan_url: "#{base_url}/?token=#{tok}", minutes: minutes }
+    DB[:qr_codes].insert(token: tok, minutes: minutes, created_at: now_utc)
+    { token: tok, minutes: minutes }
   end
 
   tokens.to_json
@@ -207,7 +206,7 @@ end
 
 # Admin – Outlaw cards
 
-get '/admin/outlaw' do
+get '/admin/outlaw_cards' do
   protected!
   @pending_debt = pending_debt_count
   @recent_cards = DB[:outlaw_cards].order(Sequel.desc(:created_at)).limit(10).all
@@ -215,7 +214,7 @@ get '/admin/outlaw' do
   erb :'admin/outlaw'
 end
 
-post '/admin/outlaw' do
+post '/admin/outlaw_cards' do
   protected!
 
   unless valid_secure_token?(params[:secure_token])
@@ -231,5 +230,5 @@ post '/admin/outlaw' do
     created_at:  Time.now.utc.iso8601
   )
 
-  redirect '/admin/outlaw?success=1'
+  redirect '/admin/outlaw_cards?success=1'
 end

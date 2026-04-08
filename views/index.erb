@@ -70,7 +70,7 @@
     <ul class="scan-list">
       <% @recent_scans.each do |scan| %>
       <li class="scan-list-item">
-        <span class="scan-timestamp"><%= format_brt(scan[:scanned_at]) %></span>
+        <span class="scan-timestamp"><%= format_brt(scan[:created_at]) %></span>
         <% if scan[:outlaw_card_id] %>
           <span>
             <span class="scan-minutes-debt"><%= scan[:minutes] %> min</span>
@@ -89,9 +89,9 @@
   <div class="admin-footer">
     <span class="admin-footer-label">
       admin:
-      <a href="/admin/qr-codes">gerar QR codes</a>
+      <a href="/admin/qr_codes">gerar QR codes</a>
       ·
-      <a href="/admin/outlaw">carta outlaw</a>
+      <a href="/admin/outlaw_cards">carta outlaw</a>
     </span>
   </div>
 
@@ -136,10 +136,10 @@
     });
   })();
 
-  // Auto-submit scan when ?token= is present in the URL
+  // Auto-submit scan when ?t= is present in the URL
   (function () {
     var params = new URLSearchParams(window.location.search);
-    var token  = params.get('token');
+    var token  = params.get('t');
     if (!token) return;
 
     fetch('/scans', {

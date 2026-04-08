@@ -58,29 +58,29 @@ All timestamps are stored as **ISO-8601 UTC strings** (e.g. `"2024-01-15T14:30:0
 All user-facing time display is converted to BRT using `BRT.utc_to_local(utc_time)`.
 
 ```
-qr_tokens
+qr_codes
   id                    INTEGER PK
   token                 TEXT UNIQUE NOT NULL   -- SecureRandom.hex(2), 4 hex chars
   minutes               INTEGER NOT NULL       -- 1–60, immutable after creation
   created_at            TEXT NOT NULL          -- ISO-8601 UTC
   last_used_week_start  TEXT                   -- 'YYYY-MM-DD' Monday in BRT; NULL = never used
 
-scan_log
+scans
   id            INTEGER PK
-  qr_token_id   INTEGER NOT NULL → qr_tokens.id
-  scanned_at    TEXT NOT NULL                  -- ISO-8601 UTC
-  # NOTE: minutes are NOT stored here; always join to qr_tokens to read them
+  qr_code_id    INTEGER NOT NULL → qr_codes.id
+  created_at    TEXT NOT NULL                  -- ISO-8601 UTC
+  # NOTE: minutes are NOT stored here; always join to qr_codes to read them
 
 outlaw_cards
   id                INTEGER PK
   description       TEXT                       -- optional, admin-supplied reason
   created_at        TEXT NOT NULL              -- ISO-8601 UTC
-  redeemed_scan_id  INTEGER → scan_log.id      -- NULL = debt still owed
+  redeemed_scan_id  INTEGER → scans.id         -- NULL = debt still owed
 ```
 
 No `settings` table. The countdown end time is **always computed dynamically**:
-find the most recent `scan_log` row that has no matching `outlaw_cards.redeemed_scan_id`,
-then `countdown_end_at = scanned_at + qr_tokens.minutes * 60`.
+find the most recent `scans` row that has no matching `outlaw_cards.redeemed_scan_id`,
+then `countdown_end_at = scans.created_at + qr_codes.minutes * 60`.
 
 ## Environment variables
 
@@ -89,7 +89,6 @@ then `countdown_end_at = scanned_at + qr_tokens.minutes * 60`.
 | `BASIC_AUTH_USER` | HTTP Basic Auth username (shared by all pages) |
 | `BASIC_AUTH_PASSWORD` | HTTP Basic Auth password |
 | `SECURE_TOKEN` | Token required on admin POST endpoints (QR generation, outlaw cards) |
-| `BASE_URL` | Origin used when building QR scan URLs (e.g. `https://example.com`) |
 
 The SQLite DB path is derived automatically from `RACK_ENV`: `db/#{RACK_ENV}.db`
 (e.g. `db/development.db`, `db/test.db`, `db/production.db`).
@@ -100,10 +99,10 @@ The SQLite DB path is derived automatically from `RACK_ENV`: `db/#{RACK_ENV}.db`
 |---|---|---|---|
 | GET | `/` | Basic Auth | Landing page; also handles `?token=` scan trigger |
 | POST | `/scans` | Basic Auth | Consume a QR token — returns JSON (see below) |
-| GET | `/admin/qr-codes` | Basic Auth | QR generation form |
-| POST | `/admin/qr-codes` | Basic Auth + Secure Token | Returns **JSON** array |
-| GET | `/admin/outlaw` | Basic Auth | Outlaw card form |
-| POST | `/admin/outlaw` | Basic Auth + Secure Token | Standard form POST → redirect |
+| GET | `/admin/qr_codes` | Basic Auth | QR generation form |
+| POST | `/admin/qr_codes` | Basic Auth + Secure Token | Returns **JSON** array |
+| GET | `/admin/outlaw_cards` | Basic Auth | Outlaw card form |
+| POST | `/admin/outlaw_cards` | Basic Auth + Secure Token | Standard form POST → redirect |
 
 ## Core business logic
 
@@ -122,15 +121,15 @@ end
 ### Countdown computation
 ```ruby
 def compute_countdown_end_at
-  scan = DB[:scan_log]
-    .join(:qr_tokens, id: :qr_token_id)
-    .left_join(:outlaw_cards, redeemed_scan_id: Sequel[:scan_log][:id])
+  scan = DB[:scans]
+    .join(:qr_codes, id: :qr_code_id)
+    .left_join(:outlaw_cards, redeemed_scan_id: Sequel[:scans][:id])
     .where(Sequel[:outlaw_cards][:id] => nil)          # anti-join: exclude debt scans
-    .select(Sequel[:scan_log][:scanned_at], Sequel[:qr_tokens][:minutes])
-    .order(Sequel.desc(Sequel[:scan_log][:scanned_at]))
+    .select(Sequel[:scans][:created_at], Sequel[:qr_codes][:minutes])
+    .order(Sequel.desc(Sequel[:scans][:created_at]))
     .first
   return nil unless scan
-  Time.parse(scan[:scanned_at]) + (scan[:minutes] * 60)
+  Time.parse(scan[:created_at]) + (scan[:minutes] * 60)
 end
 ```
 
@@ -138,11 +137,11 @@ end
 
 Returns JSON. All error responses include `{error: "..."}`. The 422 responses also include a machine-readable `code` field.
 
-1. Validate token exists in `qr_tokens` → `403` if missing/invalid
+1. Validate token exists in `qr_codes` → `403` if missing/invalid
 2. Check `last_used_week_start != current_week_start_brt` → `422 {code: 'token_already_used'}` if already used
 3. Check countdown is not active → `422 {code: 'countdown_active'}` if still running
-4. Insert row in `scan_log`
-5. Update `qr_tokens.last_used_week_start`
+4. Insert row in `scans`
+5. Update `qr_codes.last_used_week_start`
 6. If `pending_debt_count > 0`: redeem oldest outlaw card → `201 {id, qr_code: {...}, outlaw_card: {id, description}}`
 7. Else: `201 {id, qr_code: {...}, outlaw_card: null}`
 
@@ -160,7 +159,7 @@ The landing page (`GET /`) detects `?token=` in the URL and auto-POSTs to `/scan
 - `pending_debt_count = DB[:outlaw_cards].where(redeemed_scan_id: nil).count`
 - Each outlaw card represents 1 QR code owed
 - On a debt scan: `UPDATE outlaw_cards SET redeemed_scan_id = <scan_id> WHERE id = <oldest>`
-- The scan still goes into `scan_log` and still updates `last_used_week_start`
+- The scan still goes into `scans` and still updates `last_used_week_start`
 - The scan does NOT contribute to the countdown (it's excluded by the anti-join above)
 
 ## Helpers available in all routes and views
@@ -306,17 +305,17 @@ or create a new clearly labelled section — do not append rules at the end of u
 
 Prefer qualified column identifiers in multi-table queries to avoid ambiguity:
 ```ruby
-Sequel[:scan_log][:id]          # → scan_log.id
-Sequel[:qr_tokens][:minutes]    # → qr_tokens.minutes
+Sequel[:scans][:id]             # → scans.id
+Sequel[:qr_codes][:minutes]     # → qr_codes.minutes
 Sequel[:outlaw_cards][:id]      # → outlaw_cards.id (used for IS NULL anti-join check)
 ```
 
 Join syntax:
 ```ruby
-DB[:scan_log]
-  .join(:qr_tokens, id: :qr_token_id)               # qr_tokens.id = scan_log.qr_token_id
-  .left_join(:outlaw_cards, redeemed_scan_id: Sequel[:scan_log][:id])
-  .where(Sequel[:outlaw_cards][:id] => nil)          # IS NULL anti-join
+DB[:scans]
+  .join(:qr_codes, id: :qr_code_id)                     # qr_codes.id = scans.qr_code_id
+  .left_join(:outlaw_cards, redeemed_scan_id: Sequel[:scans][:id])
+  .where(Sequel[:outlaw_cards][:id] => nil)              # IS NULL anti-join
 ```
 
 ## Adding new features — checklist
