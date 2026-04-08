@@ -272,7 +272,11 @@ input:focus, textarea:focus {
   align-items: center;
   justify-content: space-between;
   gap: .75rem;
-  margin-bottom: .25rem;
+  margin-bottom: .5rem;
+}
+
+.qr-results-header .qr-results-heading {
+  margin: 0;
 }
 
 .qr-results-heading {
@@ -309,7 +313,6 @@ input:focus, textarea:focus {
 .qr-print-btn {
   white-space: nowrap;
   flex-shrink: 0;
-  margin-bottom: .5rem;
 }
 
 /* ─── Outlaw card history list ───────────────────────────────────────────────── */

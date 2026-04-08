@@ -42,9 +42,9 @@
 <script>
   // Builds a base64 SVG with the minutes number for the QR code center image
   function minutesSVG(minutes) {
-    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="56">' +
-      '<text x="40" y="40" text-anchor="middle" font-family="Nunito,sans-serif" ' +
-      'font-weight="900" font-size="32" fill="#ec4899">' + minutes + '</text>' +
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="68">' +
+      '<text x="50" y="50" text-anchor="middle" font-family="Nunito,sans-serif" ' +
+      'font-weight="900" font-size="54" fill="#ec4899">' + minutes + '</text>' +
       '</svg>';
     return 'data:image/svg+xml;base64,' + btoa(svg);
   }
@@ -60,7 +60,7 @@
       cornersSquareOptions: { type: 'extra-rounded',  color: '#ec4899' },
       cornersDotOptions:    { type: 'dot',            color: '#ec4899' },
       backgroundOptions:    { color: '#ffffff' },
-      imageOptions:         { crossOrigin: 'anonymous', margin: 3, imageSize: 0.28 }
+      imageOptions:         { crossOrigin: 'anonymous', margin: 0, imageSize: 0.42 }
     }).append(element);
   }
 
