@@ -17,5 +17,6 @@ group :test do
 end
 
 group :development do
+  gem "rackup", "~> 2.0"
   gem "standardrb", "~> 1.0"
 end
