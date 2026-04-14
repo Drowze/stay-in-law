@@ -1,16 +1,16 @@
 # Set RACK_ENV before requiring the app so that:
 # - app.rb loads .env.test (taking precedence over .env) via Dotenv.load
 # - the DB is created at db/test.db (isolated from development)
-ENV['RACK_ENV'] = 'test'
+ENV["RACK_ENV"] = "test"
 
-require 'simplecov'
+require "simplecov"
 SimpleCov.start
 
-require 'base64'
-require 'json'
-require 'minitest/autorun'
-require 'rack/test'
-require_relative '../app'
+require "base64"
+require "json"
+require "minitest/autorun"
+require "rack/test"
+require_relative "../app"
 
 # Base class for all request tests.
 # Each test runs against a fresh set of tables: setup truncates every table
@@ -33,8 +33,8 @@ class AppTest < Minitest::Test
   # Returns a Rack env hash that satisfies Basic Auth.
   def auth_header
     credentials = Base64.strict_encode64(
-      "#{ENV['BASIC_AUTH_USER']}:#{ENV['BASIC_AUTH_PASSWORD']}"
+      "#{ENV["BASIC_AUTH_USER"]}:#{ENV["BASIC_AUTH_PASSWORD"]}"
     )
-    { 'HTTP_AUTHORIZATION' => "Basic #{credentials}" }
+    {"HTTP_AUTHORIZATION" => "Basic #{credentials}"}
   end
 end

@@ -1,0 +1,40 @@
+name: CI
+
+# Security notes:
+# - Using `pull_request` (not `pull_request_target`) so fork PRs run in a
+#   sandboxed context with no access to repository secrets.
+# - GITHUB_TOKEN permissions are explicitly restricted to read-only.
+# - No secrets are required: tests rely on .env.test (committed, no real creds).
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint (standardrb)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+      - name: Run standardrb
+        run: bundle exec standardrb
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+      - name: Run test suite
+        run: bundle exec rake test

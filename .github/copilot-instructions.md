@@ -21,6 +21,7 @@ can issue "outlaw card" penalties that must be repaid before the next QR code ad
 | Templates | ERB (Sinatra's built-in renderer) |
 | Config | `dotenv ~> 2.8` — `app.rb` loads `.env.${RACK_ENV}` then `.env` via `Dotenv.load` |
 | Server | Puma (`~> 6.0`) via `config.ru` |
+| Linter | `standardrb ~> 1.0` (development group) — run with `bundle exec standardrb` |
 | Ruby compat | Ruby 4.0+ — `ostruct` and `logger` must be listed in the Gemfile |
 
 **Frontend constraints — strictly no asset pipeline:**
@@ -318,13 +319,28 @@ DB[:scans]
   .where(Sequel[:outlaw_cards][:id] => nil)              # IS NULL anti-join
 ```
 
+## CI (GitHub Actions)
+
+The workflow lives at `.github/workflows/ci.yml` and runs on every push to `main`
+and every pull request targeting `main`.
+
+**Jobs:**
+- `lint` — runs `bundle exec standardrb`
+- `test` — runs `bundle exec rake test`
+
+**Security hardening applied:**
+- Trigger is `pull_request` (never `pull_request_target`) — fork PRs run sandboxed with no access to repository secrets.
+- `permissions: contents: read` declared at workflow level — GITHUB_TOKEN cannot write to the repo.
+- No secrets are consumed — tests use `.env.test` (committed, no real credentials).
+- Uses only GitHub-maintained actions (`actions/checkout`, `ruby/setup-ruby`).
+
 ## Docker
 
 The app ships with a `Dockerfile` based on `ruby:3.3-alpine`. Key design decisions:
 
 - `tzdata` is installed so `TZInfo` can resolve `America/Sao_Paulo` on Alpine.
 - A dedicated system user/group `app` is created and set as `USER` immediately, so all subsequent layers (`WORKDIR`, `COPY`, `bundle install`) run as non-root.
-- `test` group gems are excluded from the production image (`bundle config set --local without 'test'`).
+- `test` and `development` group gems are excluded from the production image (`bundle config set --local without 'test development'`).
 - The SQLite database is **not** baked into the image — mount a host directory to `/app/db` to persist data across container restarts.
 
 ### Building
@@ -350,6 +366,7 @@ All required env vars (`BASIC_AUTH_USER`, `BASIC_AUTH_PASSWORD`, `SECURE_TOKEN`)
 
 ## Adding new features — checklist
 
+- [ ] Run `bundle exec standardrb --fix` before committing — CI enforces it
 - [ ] If adding a new page: protect with `protected!`; link from the landing page footer if user-facing
 - [ ] If adding a new admin POST action: validate `valid_secure_token?(params[:secure_token])` before DB writes
 - [ ] All new timestamps stored as `Time.now.utc.iso8601` (string, UTC)

@@ -7,7 +7,7 @@ USER app
 WORKDIR /app
 
 COPY --chown=app:app Gemfile Gemfile.lock ./
-RUN bundle config set --local without 'test' && \
+RUN bundle config set --local without 'test development' && \
     bundle install --jobs 4 --retry 3
 
 COPY --chown=app:app . .
