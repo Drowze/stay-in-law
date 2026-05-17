@@ -1,0 +1,84 @@
+<div class="container" data-controller="notices scan-trigger" data-scan-trigger-url-value="<%= scans_path %>">
+  <div class="site-header">
+    <h1>🌸 Stay in Law</h1>
+  </div>
+
+  <% if @pending_debt > 0 %>
+    <div class="alert alert-warn">
+      ⚠️ Você deve <strong><%= @pending_debt %> QR code<%= @pending_debt > 1 ? "s" : "" %></strong>.
+      O próximo QR code escaneado irá quitar a dívida, não adicionará tempo.
+    </div>
+  <% end %>
+
+  <% if @notice == "success_time_added" %>
+    <div class="alert alert-success is-auto-dismiss">
+      ✅ QR code escaneado! Tempo adicionado à contagem.
+    </div>
+  <% elsif @notice == "success_debt_paid" %>
+    <div class="alert alert-success is-auto-dismiss">
+      ✅ QR code usado para quitar uma dívida!
+    </div>
+  <% elsif @notice == "failure_token_already_used" %>
+    <div class="alert alert-warn is-auto-dismiss">
+      ⚠️ Este QR code já foi usado esta semana. Tente outro!
+    </div>
+  <% elsif @notice == "failure_countdown_active" %>
+    <div class="alert alert-warn is-auto-dismiss">
+      ⚠️ A contagem regressiva ainda está ativa. Aguarde terminar antes de escanear um novo QR code.
+    </div>
+  <% elsif @notice == "failure_bad_scan" %>
+    <div class="alert alert-danger is-auto-dismiss">
+      ❌ QR code inválido ou erro ao escanear.
+    </div>
+  <% end %>
+
+  <div class="card card-hero">
+    <% if @countdown_active %>
+      <p class="countdown-label">Tempo restante</p>
+      <div id="countdown" class="countdown-display" data-controller="countdown" data-countdown-end-value="<%= @countdown_end_at.utc.iso8601 %>">--:--:--</div>
+      <p class="countdown-subtext">
+        Termina às
+        <strong id="finish-time" class="countdown-finish-time"><%= format_brt(@countdown_end_at) %></strong>
+      </p>
+    <% else %>
+      <div class="countdown-display countdown-display-idle">00:00:00</div>
+      <p class="countdown-subtext">
+        <% if @recent_scans.empty? %>
+          Nenhum QR code escaneado ainda 🌸
+        <% else %>
+          Escaneie um QR code para ganhar tempo! 📱
+        <% end %>
+      </p>
+    <% end %>
+  </div>
+
+  <% unless @recent_scans.empty? %>
+    <div class="card">
+      <h2>📋 Últimos usos</h2>
+      <ul class="scan-list">
+        <% @recent_scans.each do |scan| %>
+          <li class="scan-list-item">
+            <span class="scan-timestamp"><%= format_brt(scan.created_at) %></span>
+            <% if scan.redeemed_outlaw_card.present? %>
+              <span>
+                <span class="scan-minutes-debt"><%= scan.qr_code.minutes %> min</span>
+                <span class="scan-debt-label">(dívida)</span>
+              </span>
+            <% else %>
+              <span class="scan-minutes"><%= scan.qr_code.minutes %> min</span>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="admin-footer">
+    <span class="admin-footer-label">
+      admin:
+      <%= link_to "gerar QR codes", new_admin_qr_code_path %>
+      ·
+      <%= link_to "carta outlaw", admin_outlaw_cards_path %>
+    </span>
+  </div>
+</div>

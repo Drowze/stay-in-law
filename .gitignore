@@ -19,3 +19,6 @@ vendor/bundle/
 .vscode/
 *.swp
 *.swo
+
+# Ignore master key for decrypting credentials and more.
+/config/master.key

@@ -1,0 +1,35 @@
+<div class="container" data-controller="qr-generator" data-qr-generator-url-value="<%= admin_qr_codes_path %>">
+  <div class="page-header">
+    <%= link_to "← início", root_path, class: "back-link" %>
+    <h1>🔑 Gerar QR Codes</h1>
+  </div>
+
+  <div class="card">
+    <form data-qr-generator-target="form" data-action="submit->qr-generator#submit" autocomplete="off">
+      <div class="field">
+        <label for="count">Quantidade (1–50)</label>
+        <input type="number" id="count" name="count" min="1" max="50" value="1" required>
+      </div>
+      <div class="field">
+        <label for="minutes">Minutos por código (1–60)</label>
+        <input type="number" id="minutes" name="minutes" min="1" max="60" value="30" required>
+      </div>
+      <div class="field">
+        <label for="secure_token">Token de segurança</label>
+        <input type="password" id="secure_token" name="secure_token" required>
+      </div>
+      <div data-qr-generator-target="error" class="alert alert-danger is-hidden"></div>
+      <button type="submit" class="btn btn-primary btn-block" data-qr-generator-target="submitButton">Gerar QR Codes</button>
+    </form>
+  </div>
+
+  <div data-qr-generator-target="results" class="is-hidden">
+    <div class="qr-results-header">
+      <h2 class="qr-results-heading">✅ QR Codes Gerados</h2>
+      <button class="btn btn-primary qr-print-btn" data-action="click->qr-generator#print">🖨️ Imprimir</button>
+    </div>
+    <div data-qr-generator-target="grid"></div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/qr-code-styling@1.6.0/lib/qr-code-styling.js"></script>
