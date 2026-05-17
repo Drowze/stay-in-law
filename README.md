@@ -1,24 +1,21 @@
-# README
+# Stay in Law (Rails)
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+## Setup
 
-Things you may want to cover:
+```bash
+bundle install
+bundle exec rails db:prepare
+```
 
-* Ruby version
+## Validation
 
-* System dependencies
+```bash
+bundle exec standardrb
+bundle exec rails test
+```
 
-* Configuration
+## Dependency update policy
 
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+- Direct dependencies are kept on the latest available versions where compatible.
+- Current direct dependencies are up to date (`bundle outdated --only-explicit` reports `Bundle up to date!`).
+- When a dependency is not on the absolute latest release, the reason should be compatibility constraints from Rails/Ruby or security/stability concerns and must be documented in this file.
