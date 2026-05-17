@@ -1,5 +1,9 @@
 # Stay in Law (Rails)
 
+## Ruby version
+
+- Required for local development: `ruby-4.0.0` (see `.ruby-version`)
+
 ## Setup
 
 ```bash

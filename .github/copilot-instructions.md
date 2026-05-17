@@ -336,7 +336,7 @@ and every pull request targeting `main`.
 
 ## Docker
 
-The app ships with a `Dockerfile` based on `ruby:3.3-alpine`. Key design decisions:
+The app ships with a `Dockerfile` based on `ruby:4.0.0-slim`. Key design decisions:
 
 - `tzdata` is installed so `TZInfo` can resolve `America/Sao_Paulo` on Alpine.
 - A dedicated system user/group `app` is created and set as `USER` immediately, so all subsequent layers (`WORKDIR`, `COPY`, `bundle install`) run as non-root.
