@@ -1,15 +1,17 @@
 source "https://rubygems.org"
 
-gem "rails", "~> 8.1.3"
-gem "sqlite3", ">= 2.9.4"
-gem "puma", ">= 8.0.1"
-gem "sprockets-rails"
+# ruby File.read(File.join(__dir__, ".ruby-version")).strip
+
+gem "rails", "~> 8.1"
+gem "sqlite3", "~> 2.9"
+gem "puma", "~> 8.0"
+gem "sprockets-rails" # TODO: remove in favor of propshaft?
 gem "importmap-rails"
 gem "turbo-rails"
 gem "stimulus-rails"
-gem "tzinfo-data", platforms: %i[windows jruby]
-gem "bootsnap", require: false
-gem "dotenv", "~> 3.0"
+gem "thruster", require: false
+
+gem "dotenv"
 
 group :development, :test do
   gem "debug", platforms: %i[mri windows], require: "debug/prelude"

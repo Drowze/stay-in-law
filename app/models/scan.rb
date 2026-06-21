@@ -5,8 +5,8 @@ class Scan < ApplicationRecord
   validates :created_at, presence: true
 
   scope :recent_with_details, lambda {
-    left_joins(:redeemed_outlaw_card)
-      .includes(:qr_code)
+    includes(:qr_code, :redeemed_outlaw_card)
+      .left_joins(:redeemed_outlaw_card)
       .order(created_at: :desc)
   }
 

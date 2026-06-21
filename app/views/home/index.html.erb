@@ -1,4 +1,4 @@
-<div class="container" data-controller="notices scan-trigger" data-scan-trigger-url-value="<%= scans_path %>">
+<div class="container" data-controller="scan-trigger" data-scan-trigger-url-value="<%= scans_path %>">
   <div class="site-header">
     <h1>🌸 Stay in Law</h1>
   </div>
@@ -11,23 +11,23 @@
   <% end %>
 
   <% if @notice == "success_time_added" %>
-    <div class="alert alert-success is-auto-dismiss">
+    <div class="alert alert-success">
       ✅ QR code escaneado! Tempo adicionado à contagem.
     </div>
   <% elsif @notice == "success_debt_paid" %>
-    <div class="alert alert-success is-auto-dismiss">
+    <div class="alert alert-success">
       ✅ QR code usado para quitar uma dívida!
     </div>
   <% elsif @notice == "failure_token_already_used" %>
-    <div class="alert alert-warn is-auto-dismiss">
+    <div class="alert alert-warn">
       ⚠️ Este QR code já foi usado esta semana. Tente outro!
     </div>
   <% elsif @notice == "failure_countdown_active" %>
-    <div class="alert alert-warn is-auto-dismiss">
+    <div class="alert alert-warn">
       ⚠️ A contagem regressiva ainda está ativa. Aguarde terminar antes de escanear um novo QR code.
     </div>
   <% elsif @notice == "failure_bad_scan" %>
-    <div class="alert alert-danger is-auto-dismiss">
+    <div class="alert alert-danger">
       ❌ QR code inválido ou erro ao escanear.
     </div>
   <% end %>
@@ -52,7 +52,7 @@
     <% end %>
   </div>
 
-  <% unless @recent_scans.empty? %>
+  <% if @recent_scans.present? %>
     <div class="card">
       <h2>📋 Últimos usos</h2>
       <ul class="scan-list">

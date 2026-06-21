@@ -29,7 +29,7 @@
     <% end %>
   </div>
 
-  <% unless @recent_cards.empty? %>
+  <% if @recent_cards.present? %>
     <div class="card">
       <h2>📜 Cartas recentes</h2>
       <ul class="outlaw-list">

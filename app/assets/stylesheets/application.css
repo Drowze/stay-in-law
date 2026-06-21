@@ -355,9 +355,3 @@ input:focus, textarea:focus {
 
 /* JS-toggled visibility — use classList.remove('is-hidden') to reveal */
 .is-hidden { display: none !important; }
-
-/* Applied by JS during fade-out animation (e.g. debt-paid notice) */
-.is-fading {
-  opacity: 0;
-  transition: opacity .5s;
-}

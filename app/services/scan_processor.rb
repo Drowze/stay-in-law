@@ -1,5 +1,5 @@
 class ScanProcessor
-  Result = Struct.new(:status, :body, keyword_init: true)
+  Result = Struct.new(:status, :body)
 
   def initialize(token:, current_week_start:)
     @token = token.to_s.strip

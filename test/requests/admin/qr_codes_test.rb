@@ -6,20 +6,16 @@ class QrCodesRequestTest < ActionDispatch::IntegrationTest
     post admin_qr_codes_path, params: defaults.merge(params), headers: auth_headers
   end
 
-  def parsed_body
-    JSON.parse(response.body)
-  end
-
   def test_returns_200_with_json_array
     post_qr_codes
     assert_response :success
     assert_equal "application/json; charset=utf-8", response.content_type
-    assert_kind_of Array, parsed_body
+    assert_kind_of Array, response.parsed_body
   end
 
   def test_generates_the_requested_number_of_codes
     post_qr_codes(count: "5")
-    assert_equal 5, parsed_body.length
+    assert_equal 5, response.parsed_body.length
   end
 
   def test_persists_exactly_that_many_tokens_in_the_database
@@ -29,7 +25,7 @@ class QrCodesRequestTest < ActionDispatch::IntegrationTest
 
   def test_each_code_carries_the_requested_minutes_value
     post_qr_codes(count: "3", minutes: "45")
-    parsed_body.each { |qr| assert_equal 45, qr["minutes"] }
+    response.parsed_body.each { |qr| assert_equal 45, qr["minutes"] }
   end
 
   def test_database_records_store_the_correct_minutes_value
@@ -39,23 +35,23 @@ class QrCodesRequestTest < ActionDispatch::IntegrationTest
 
   def test_each_code_contains_a_valid_hex_token
     post_qr_codes(count: "3")
-    parsed_body.each { |qr| assert_match(/\A[0-9a-f]{4}\z/, qr["token"]) }
+    response.parsed_body.each { |qr| assert_match(/\A[0-9a-f]{4}\z/, qr["token"]) }
   end
 
   def test_all_generated_tokens_are_unique
     post_qr_codes(count: "10")
-    tokens = parsed_body.map { |qr| qr["token"] }
+    tokens = response.parsed_body.map { |qr| qr["token"] }
     assert_equal tokens.length, tokens.uniq.length
   end
 
   def test_response_does_not_include_scan_url
     post_qr_codes(count: "1", minutes: "20")
-    assert_nil parsed_body.first["scan_url"]
+    assert_nil response.parsed_body.first["scan_url"]
   end
 
   def test_tokens_are_stored_in_the_database_matching_the_response
     post_qr_codes(count: "3", minutes: "10")
-    parsed_body.each do |qr|
+    response.parsed_body.each do |qr|
       db_row = QrCode.find_by(token: qr["token"])
       refute_nil db_row
       assert_equal qr["minutes"], db_row.minutes
@@ -75,7 +71,7 @@ class QrCodesRequestTest < ActionDispatch::IntegrationTest
   def test_rejects_missing_secure_token
     post_qr_codes(secure_token: "")
     assert_response :forbidden
-    assert_equal "Token de segurança inválido.", parsed_body["error"]
+    assert_equal "Token de segurança inválido.", response.parsed_body["error"]
   end
 
   def test_rejects_wrong_secure_token
@@ -110,8 +106,8 @@ class QrCodesRequestTest < ActionDispatch::IntegrationTest
 
   def test_validation_error_returns_json_with_error_key
     post_qr_codes(count: "0")
-    assert_kind_of String, parsed_body["error"]
-    refute_empty parsed_body["error"]
+    assert_kind_of String, response.parsed_body["error"]
+    refute_empty response.parsed_body["error"]
   end
 
   def test_does_not_create_tokens_on_validation_error
@@ -122,25 +118,25 @@ class QrCodesRequestTest < ActionDispatch::IntegrationTest
   def test_accepts_minimum_count_of_one
     post_qr_codes(count: "1")
     assert_response :success
-    assert_equal 1, parsed_body.length
+    assert_equal 1, response.parsed_body.length
   end
 
   def test_accepts_maximum_count_of_fifty
     post_qr_codes(count: "50")
     assert_response :success
-    assert_equal 50, parsed_body.length
+    assert_equal 50, response.parsed_body.length
   end
 
   def test_accepts_minimum_minutes_of_one
     post_qr_codes(minutes: "1")
     assert_response :success
-    assert_equal 1, parsed_body.first["minutes"]
+    assert_equal 1, response.parsed_body.first["minutes"]
   end
 
   def test_accepts_maximum_minutes_of_sixty
     post_qr_codes(minutes: "60")
     assert_response :success
-    assert_equal 60, parsed_body.first["minutes"]
+    assert_equal 60, response.parsed_body.first["minutes"]
   end
 
   def test_get_returns_200_with_auth

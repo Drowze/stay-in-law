@@ -6,13 +6,11 @@
 !/.env.example
 !/.env.test
 
-# Ignore master key for decrypting credentials and more.
-/config/master.key
-
 # Ignore the default SQLite database.
 /db/*.sqlite3
 /db/*.sqlite3-*
 /db/*.db
+/db/*.db_*
 
 # Ignore all logfiles and tempfiles.
 /log/*
@@ -25,11 +23,12 @@
 !/tmp/pids/
 !/tmp/pids/.keep
 
-# Ignore storage (uploaded files in development and any SQLite files in production)
+# Ignore storage (uploaded files in development and any SQLite databases).
 /storage/*
 !/storage/.keep
-/storage/*.sqlite3
-/storage/*.sqlite3-journal
+/tmp/storage/*
+!/tmp/storage/
+!/tmp/storage/.keep
 
 # Ignore asset cache and generated assets
 /public/assets
@@ -45,8 +44,8 @@
 *.swp
 *.swo
 
+# Ignore master key for decrypting credentials and more.
+/config/master.key
+
 # Ignore coverage reports
 /coverage/
-
-# Ignore local vendored gems
-/vendor/bundle/

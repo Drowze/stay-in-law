@@ -25,10 +25,6 @@ class ScansRequestTest < ActionDispatch::IntegrationTest
     post scans_path, params: {token: token}, headers: auth_headers
   end
 
-  def parsed_body
-    JSON.parse(response.body)
-  end
-
   def test_returns_201_on_success
     qr = insert_token(minutes: 20)
     post_scan(token: qr[:token])
@@ -44,14 +40,14 @@ class ScansRequestTest < ActionDispatch::IntegrationTest
   def test_success_body_contains_scan_id
     qr = insert_token
     post_scan(token: qr[:token])
-    assert parsed_body["id"].is_a?(Integer)
-    assert parsed_body["id"].positive?
+    assert response.parsed_body["id"].is_a?(Integer)
+    assert response.parsed_body["id"].positive?
   end
 
   def test_success_body_contains_qr_code
     qr = insert_token(minutes: 15)
     post_scan(token: qr[:token])
-    qr_code = parsed_body["qr_code"]
+    qr_code = response.parsed_body["qr_code"]
     assert_equal qr[:id], qr_code["id"]
     assert_equal qr[:token], qr_code["token"]
     assert_equal qr[:minutes], qr_code["minutes"]
@@ -60,7 +56,7 @@ class ScansRequestTest < ActionDispatch::IntegrationTest
   def test_success_body_has_null_outlaw_card_when_no_debt
     qr = insert_token
     post_scan(token: qr[:token])
-    assert_nil parsed_body["outlaw_card"]
+    assert_nil response.parsed_body["outlaw_card"]
   end
 
   def test_inserts_row_in_scans
@@ -92,7 +88,7 @@ class ScansRequestTest < ActionDispatch::IntegrationTest
     insert_outlaw_card(description: "stayed up late")
     qr = insert_token
     post_scan(token: qr[:token])
-    oc = parsed_body["outlaw_card"]
+    oc = response.parsed_body["outlaw_card"]
     refute_nil oc
     assert oc["id"].is_a?(Integer)
     assert_equal "stayed up late", oc["description"]
@@ -137,7 +133,7 @@ class ScansRequestTest < ActionDispatch::IntegrationTest
   def test_already_used_error_has_code_token_already_used
     qr = insert_token(last_used_week_start: current_week_start_brt)
     post_scan(token: qr[:token])
-    assert_equal "token_already_used", parsed_body["code"]
+    assert_equal "token_already_used", response.parsed_body["code"]
   end
 
   def test_already_used_does_not_insert_scans_row
@@ -157,7 +153,7 @@ class ScansRequestTest < ActionDispatch::IntegrationTest
     activate_countdown
     qr = insert_token
     post_scan(token: qr[:token])
-    assert_equal "countdown_active", parsed_body["code"]
+    assert_equal "countdown_active", response.parsed_body["code"]
   end
 
   def test_countdown_active_does_not_insert_extra_scans_row
@@ -180,7 +176,7 @@ class ScansRequestTest < ActionDispatch::IntegrationTest
     insert_outlaw_card(description: "active debt")
     qr = insert_token
     post_scan(token: qr[:token])
-    refute_nil parsed_body["outlaw_card"]
+    refute_nil response.parsed_body["outlaw_card"]
     assert_equal 0, OutlawCard.pending.count
   end
 

@@ -18,7 +18,7 @@ class ApplicationController < ActionController::Base
   end
 
   def current_week_start_brt
-    local = TimezoneSupport.brt.utc_to_local(Time.current.utc)
+    local = Time.current.in_time_zone("Brasilia")
     days_back = (local.wday - 1) % 7
     monday = local - (days_back * 86_400)
     format("%<y>04d-%<m>02d-%<d>02d", y: monday.year, m: monday.month, d: monday.day)
@@ -29,6 +29,11 @@ class ApplicationController < ActionController::Base
   end
 
   def format_brt(time_or_str)
-    TimezoneSupport.format_brt(time_or_str)
+    return "—" if time_or_str.blank?
+
+    time_or_str = Time.parse(time_or_str) if time_or_str.is_a?(String)
+    time_or_str
+      .in_time_zone("Brasilia")
+      .strftime("%d/%m %H:%M")
   end
 end

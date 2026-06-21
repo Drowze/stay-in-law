@@ -126,9 +126,4 @@ class RootTest < ActionDispatch::IntegrationTest
     get_root(notice: "failure_bad_scan")
     assert_includes response.body, "QR code inválido"
   end
-
-  def test_no_notice_banner_when_no_notice_param
-    get_root
-    refute_includes response.body, "alert is-auto-dismiss"
-  end
 end
