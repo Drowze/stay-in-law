@@ -1,0 +1,54 @@
+<div class="container">
+  <div class="page-header">
+    <%= link_to "← início", root_path, class: "back-link" %>
+    <h1>🃏 Carta Outlaw</h1>
+  </div>
+
+  <% if @success %>
+    <div class="alert alert-success">✅ Carta outlaw emitida com sucesso!</div>
+  <% end %>
+
+  <% if @pending_debt > 0 %>
+    <div class="alert alert-warn">
+      ⚠️ Dívida atual: <strong><%= @pending_debt %> QR code<%= @pending_debt > 1 ? "s" : "" %></strong> a pagar.
+    </div>
+  <% end %>
+
+  <div class="card">
+    <h2>Emitir nova carta</h2>
+    <%= form_with url: admin_outlaw_cards_path, method: :post, local: true, html: {autocomplete: "off"} do |f| %>
+      <div class="field">
+        <%= f.label :description, "Motivo (opcional)" %>
+        <%= f.text_area :description, rows: 3, placeholder: "Ex: ficou 2h a mais sem fazer o dever de casa…" %>
+      </div>
+      <div class="field">
+        <%= f.label :secure_token, "Token de segurança" %>
+        <%= f.password_field :secure_token, required: true %>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">⚖️ Emitir Carta Outlaw</button>
+    <% end %>
+  </div>
+
+  <% if @recent_cards.present? %>
+    <div class="card">
+      <h2>📜 Cartas recentes</h2>
+      <ul class="outlaw-list">
+        <% @recent_cards.each do |card| %>
+          <li class="outlaw-list-item">
+            <div class="outlaw-list-item-header">
+              <span class="outlaw-date"><%= format_brt(card.created_at) %></span>
+              <% if card.redeemed_scan_id.present? %>
+                <span class="outlaw-status outlaw-status-redeemed">✅ quitada</span>
+              <% else %>
+                <span class="outlaw-status outlaw-status-pending">⏳ pendente</span>
+              <% end %>
+            </div>
+            <% if card.description.present? %>
+              <div class="outlaw-description">"<%= h(card.description) %>"</div>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+</div>

@@ -1,0 +1,357 @@
+/* ─── Design tokens ──────────────────────────────────────────────────────────── */
+
+:root {
+  --bg:           #fdf2f8;
+  --card-bg:      #ffffff;
+  --primary:      #ec4899;
+  --primary-soft: #fce7f3;
+  --accent:       #a855f7;
+  --text:         #1e1b2e;
+  --muted:        #9b8fa6;
+  --border:       #f3e0ec;
+  --shadow:       0 2px 16px rgba(236, 72, 153, .10);
+  --warn:         #f59e0b;
+  --warn-soft:    #fffbeb;
+  --danger:       #ef4444;
+  --danger-soft:  #fef2f2;
+  --success:      #10b981;
+  --success-soft: #ecfdf5;
+}
+
+/* ─── Reset ──────────────────────────────────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ─── Base ───────────────────────────────────────────────────────────────────── */
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+h1 { font-size: 1.5rem; font-weight: 900; color: var(--primary); }
+h2 { font-size: 1rem;   font-weight: 700; margin-bottom: .75rem; color: var(--accent); }
+
+a { color: var(--primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ─── Layout ─────────────────────────────────────────────────────────────────── */
+
+.container {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 2rem;
+}
+
+/* Vertically centres content — used on the error page */
+.container-centered {
+  display: flex;
+  align-items: center;
+  min-height: 100vh;
+}
+
+/* ─── Card ───────────────────────────────────────────────────────────────────── */
+
+.card {
+  background: var(--card-bg);
+  border-radius: 1.25rem;
+  box-shadow: var(--shadow);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: .875rem;
+}
+
+/* Centred content with extra breathing room — countdown & error cards */
+.card-hero {
+  text-align: center;
+  padding: 2rem 1.5rem;
+}
+
+/* ─── Button ─────────────────────────────────────────────────────────────────── */
+
+.btn {
+  display: inline-block;
+  padding: .65rem 1.5rem;
+  border-radius: 2rem;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 1rem;
+  border: none;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+.btn:hover    { opacity: .85; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-block   { display: block; width: 100%; text-align: center; }
+
+/* ─── Form ───────────────────────────────────────────────────────────────────── */
+
+.field { margin-bottom: 1rem; }
+
+label {
+  display: block;
+  font-weight: 600;
+  font-size: .875rem;
+  margin-bottom: .3rem;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="password"],
+textarea {
+  width: 100%;
+  padding: .6rem .9rem;
+  border: 1.5px solid var(--border);
+  border-radius: .6rem;
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--text);
+  background: #fff;
+  transition: border-color .15s;
+}
+input:focus, textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+/* ─── Alert ──────────────────────────────────────────────────────────────────── */
+
+.alert {
+  padding: .75rem 1rem;
+  border-radius: .75rem;
+  font-weight: 600;
+  font-size: .875rem;
+  margin-bottom: .875rem;
+}
+.alert-warn    { background: var(--warn-soft);    color: #92400e; border: 1.5px solid #fcd34d; }
+.alert-danger  { background: var(--danger-soft);  color: #991b1b; border: 1.5px solid #fca5a5; }
+.alert-success { background: var(--success-soft); color: #166534; border: 1.5px solid #86efac; }
+
+/* ─── Page header — admin back-link + page title ────────────────────────────── */
+
+.page-header {
+  padding: .75rem 0 .25rem;
+}
+
+.page-header h1 {
+  margin-top: .5rem;
+}
+
+.back-link {
+  font-size: .85rem;
+  color: var(--muted);
+}
+
+/* ─── Site header — landing page top bar ────────────────────────────────────── */
+
+.site-header {
+  text-align: center;
+  padding: .75rem 0 .25rem;
+}
+
+/* ─── Countdown ──────────────────────────────────────────────────────────────── */
+
+.countdown-label {
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  color: var(--muted);
+  margin-bottom: .5rem;
+  text-transform: uppercase;
+}
+
+/* The big HH:MM:SS digits */
+.countdown-display {
+  font-size: clamp(3rem, 14vw, 5rem);
+  font-weight: 900;
+  letter-spacing: -.02em;
+  color: var(--primary);
+  line-height: 1;
+}
+
+/* Greyed-out state when no countdown is running */
+.countdown-display-idle {
+  color: var(--border);
+}
+
+.countdown-subtext {
+  margin-top: .875rem;
+  font-size: .9rem;
+  color: var(--muted);
+}
+
+/* "Termina às HH:MM" — the highlighted time value */
+.countdown-finish-time {
+  color: var(--accent);
+}
+
+/* ─── Scan history list ──────────────────────────────────────────────────────── */
+
+.scan-list {
+  list-style: none;
+  font-size: .875rem;
+}
+
+.scan-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: .5rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.scan-timestamp {
+  color: var(--muted);
+}
+
+/* Minutes earned — normal scan */
+.scan-minutes {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* Minutes shown struck-through when the scan paid off a debt */
+.scan-minutes-debt {
+  font-weight: 700;
+  color: var(--warn);
+  text-decoration: line-through;
+}
+
+.scan-debt-label {
+  font-size: .75rem;
+  color: var(--warn);
+  margin-left: .25rem;
+}
+
+/* ─── Admin footer links — bottom of landing page ───────────────────────────── */
+
+.admin-footer {
+  text-align: center;
+  margin-top: 2rem;
+  padding-bottom: .5rem;
+}
+
+.admin-footer-label {
+  font-size: .75rem;
+  color: var(--muted);
+}
+
+/* ─── Error page ─────────────────────────────────────────────────────────────── */
+
+.error-inner {
+  width: 100%;
+  text-align: center;
+}
+
+.error-icon {
+  font-size: 3rem;
+  margin-bottom: .75rem;
+}
+
+.error-title {
+  margin-bottom: .75rem;
+}
+
+.error-message {
+  font-size: 1rem;
+  color: var(--text);
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+/* ─── QR code results section ────────────────────────────────────────────────── */
+
+.qr-results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  margin-bottom: .5rem;
+}
+
+.qr-results-header .qr-results-heading {
+  margin: 0;
+}
+
+.qr-results-heading {
+  margin: .25rem 0 .75rem;
+  /* colour is inherited from base h2 rule */
+}
+
+/* Each generated QR code card (created dynamically by JS) */
+.qr-card {
+  text-align: center;
+}
+
+.qr-image {
+  display: inline-block;
+  margin-bottom: .75rem;
+}
+
+/* qr-code-styling renders a canvas — ensure it renders at correct size */
+.qr-image canvas {
+  display: block;
+}
+
+.qr-info {
+  font-size: .75rem;
+  color: var(--muted);
+  word-break: break-all;
+  margin-top: .25rem;
+}
+
+.qr-info-minutes {
+  color: var(--accent);
+}
+
+.qr-print-btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ─── Outlaw card history list ───────────────────────────────────────────────── */
+
+.outlaw-list {
+  list-style: none;
+  font-size: .85rem;
+}
+
+.outlaw-list-item {
+  padding: .5rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.outlaw-list-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.outlaw-date {
+  color: var(--muted);
+  font-size: .8rem;
+}
+
+.outlaw-status {
+  font-size: .8rem;
+}
+
+.outlaw-status-redeemed { color: var(--muted); }
+.outlaw-status-pending  { color: var(--warn); font-weight: 700; }
+
+.outlaw-description {
+  margin-top: .25rem;
+  color: var(--text);
+  font-style: italic;
+}
+
+/* ─── Utilities ──────────────────────────────────────────────────────────────── */
+
+/* JS-toggled visibility — use classList.remove('is-hidden') to reveal */
+.is-hidden { display: none !important; }

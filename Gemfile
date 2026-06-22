@@ -1,22 +1,23 @@
 source "https://rubygems.org"
 
-gem "ostruct"   # required by rack/sinatra on Ruby 4.0+
-gem "logger"    # required by rack on Ruby 4.0+
-gem "sinatra", "~> 4.0"
-gem "sequel", "~> 5.0"
-gem "sqlite3", "~> 2.0"
-gem "tzinfo", "~> 2.0"
-gem "dotenv", "~> 3.0"
-gem "puma", "~> 8.0"
-gem "rake"
+# ruby File.read(File.join(__dir__, ".ruby-version")).strip
 
-group :test do
-  gem "minitest", "~> 6.0"
-  gem "rack-test", "~> 2.0"
-  gem "simplecov", "~> 0.22", require: false
+gem "rails", "~> 8.1"
+gem "sqlite3", "~> 2.9"
+gem "puma", "~> 8.0"
+gem "sprockets-rails" # TODO: remove in favor of propshaft?
+gem "importmap-rails"
+gem "turbo-rails"
+gem "stimulus-rails"
+gem "thruster", require: false
+
+gem "dotenv"
+
+group :development, :test do
+  gem "debug", platforms: %i[mri windows], require: "debug/prelude"
+  gem "standardrb", "~> 1.0"
 end
 
-group :development do
-  gem "rackup", "~> 2.0"
-  gem "standardrb", "~> 1.0"
+group :test do
+  gem "simplecov", "~> 0.22", require: false
 end

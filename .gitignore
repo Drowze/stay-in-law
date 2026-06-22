@@ -1,21 +1,51 @@
-# SQLite database file
-db/*.db
+# Ignore bundler config
+/.bundle
 
-# Test coverage report
-coverage/
+# Ignore all environment files except examples
+/.env*
+!/.env.example
+!/.env.test
 
-# Dotenv secrets — copy .env.example and fill in values
-.env
+# Ignore the default SQLite database.
+/db/*.sqlite3
+/db/*.sqlite3-*
+/db/*.db
+/db/*.db_*
 
-# Ruby / Bundler
-.bundle/
-vendor/bundle/
+# Ignore all logfiles and tempfiles.
+/log/*
+!/log/.keep
+/tmp/*
+!/tmp/.keep
 
-# macOS
+# Ignore pidfiles, but keep the directory.
+/tmp/pids/*
+!/tmp/pids/
+!/tmp/pids/.keep
+
+# Ignore storage (uploaded files in development and any SQLite databases).
+/storage/*
+!/storage/.keep
+/tmp/storage/*
+!/tmp/storage/
+!/tmp/storage/.keep
+
+# Ignore asset cache and generated assets
+/public/assets
+/tmp/cache
+
+# Ignore node modules and package manager files (if any)
+/node_modules
+
+# Ignore system/editor files
 .DS_Store
-
-# Editor / IDE
 .idea/
 .vscode/
 *.swp
 *.swo
+
+# Ignore master key for decrypting credentials and more.
+/config/master.key
+
+# Ignore coverage reports
+/coverage/

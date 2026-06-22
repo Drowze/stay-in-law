@@ -1,0 +1,10 @@
+<div class="container container-centered">
+  <div class="error-inner">
+    <div class="card card-hero">
+      <div class="error-icon">🚫</div>
+      <h1 class="error-title">Ops!</h1>
+      <p class="error-message"><%= h(@message || "Ocorreu um erro.") %></p>
+      <%= link_to "Voltar ao início", root_path, class: "btn btn-primary" %>
+    </div>
+  </div>
+</div>

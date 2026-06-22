@@ -336,13 +336,6 @@ and every pull request targeting `main`.
 
 ## Docker
 
-The app ships with a `Dockerfile` based on `ruby:3.3-alpine`. Key design decisions:
-
-- `tzdata` is installed so `TZInfo` can resolve `America/Sao_Paulo` on Alpine.
-- A dedicated system user/group `app` is created and set as `USER` immediately, so all subsequent layers (`WORKDIR`, `COPY`, `bundle install`) run as non-root.
-- `test` and `development` group gems are excluded from the production image (`bundle config set --local without 'test development'`).
-- The SQLite database is **not** baked into the image — mount a host directory to `/app/db` to persist data across container restarts.
-
 ### Building
 
 ```bash
@@ -353,16 +346,17 @@ docker build -t stay-in-law .
 
 ```bash
 docker run -d \
-  -p 4567:4567 \
+  -p 3000:80 \
   -v /path/to/data:/app/db \
   -e BASIC_AUTH_USER=youruser \
   -e BASIC_AUTH_PASSWORD=yourpassword \
   -e SECURE_TOKEN=yoursecrettoken \
+  -e SECRET_KEY_BASE=super-secret-string-that-is-at-least-32-bytes \
   --name stay-in-law \
   stay-in-law
 ```
 
-All required env vars (`BASIC_AUTH_USER`, `BASIC_AUTH_PASSWORD`, `SECURE_TOKEN`) must be provided at runtime — there is no `.env` file inside the image. The app listens on port `4567`.
+All required env vars (`BASIC_AUTH_USER`, `BASIC_AUTH_PASSWORD`, `SECURE_TOKEN`, `SECRET_KEY_BASE`) must be provided at runtime — there is no `.env` file inside the image. The app listens on port `80`.
 
 ## Adding new features — checklist
 

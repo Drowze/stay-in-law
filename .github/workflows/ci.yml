@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.3"
+          ruby-version: "4.0"
           bundler-cache: true
       - name: Run standardrb
         run: bundle exec standardrb
@@ -34,7 +34,9 @@ jobs:
       - uses: actions/checkout@v6
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.3"
+          ruby-version: "4.0"
           bundler-cache: true
+      - name: Prepare database
+        run: bundle exec rails db:prepare
       - name: Run test suite
-        run: bundle exec rake test
+        run: bundle exec rails test
